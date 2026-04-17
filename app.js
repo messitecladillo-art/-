@@ -1532,14 +1532,58 @@ document.addEventListener('DOMContentLoaded', () => {
                 const container = document.getElementById('chat-messages-container');
                 if(!container) return;
                 
-                container.innerHTML = '<div style="text-align: center; color: #64748b; font-size: 0.85rem; margin-bottom: 20px;">连接已建立，进入端到端匿名量子频段...</div>';
+                container.innerHTML = '<div style="text-align: center; color: #64748b; font-size: 0.85rem; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 5px; border-radius:20px;">连接已建立，进入端到端匿名量子频段...</div>';
+                
+                let myPetEmoji = window.myPet && window.myPet.type ? EMOJIS[window.myPet.type] : '🦊';
+                let theirPetEmoji = '👽'; // 陌生星辰默认头像
+
                 messages.forEach(msg => {
+                    if (msg.content === '[SYSTEM_HUG]') {
+                        container.innerHTML += `<div style="text-align:center; margin: 10px 0;"><span style="background:rgba(244,114,182,0.15); color:#f472b6; padding: 5px 15px; border-radius:15px; font-size:0.85rem; border:1px solid rgba(244,114,182,0.3);">✨ 对方发送了一个跨星际拥抱 🫂</span></div>`;
+                        return;
+                    }
+
                     const isMine = msg.sender_id === myClientId;
                     const cssClass = isMine ? 'chat-mine' : 'chat-theirs';
-                    container.innerHTML += `<div class="chat-bubble ${cssClass}">${msg.content.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`;
+                    const avatar = isMine ? myPetEmoji : theirPetEmoji;
+                    
+                    if(isMine) {
+                        container.innerHTML += `
+                            <div style="display:flex; justify-content:flex-end; gap:8px; align-items:flex-end; margin-bottom: 5px;">
+                                <div class="chat-bubble ${cssClass}">${msg.content.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+                                <div style="font-size:1.5rem; filter:drop-shadow(0 0 5px rgba(255,255,255,0.3));">${avatar}</div>
+                            </div>
+                        `;
+                    } else {
+                        container.innerHTML += `
+                            <div style="display:flex; justify-content:flex-start; gap:8px; align-items:flex-end; margin-bottom: 5px;">
+                                <div style="font-size:1.5rem; filter:drop-shadow(0 0 5px rgba(255,255,255,0.3));">${avatar}</div>
+                                <div class="chat-bubble ${cssClass}">${msg.content.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+                            </div>
+                        `;
+                    }
                 });
                 container.scrollTop = container.scrollHeight;
             }
+        } catch(e) {}
+    }
+
+    async function sendChatMessage(content) {
+        if(!content || !currentChatRoomId) return;
+        const newMsg = {
+            id: 'msg_' + Date.now() + '_' + Math.floor(Math.random()*1000),
+            room_id: currentChatRoomId,
+            sender_id: myClientId,
+            content: filterProfanity(content),
+            timestamp: new Date().getTime()
+        };
+        try {
+            await fetch(`${SUPABASE_URL}/rest/v1/chat_messages`, {
+                method: 'POST',
+                headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                body: JSON.stringify(newMsg)
+            });
+            fetchChatMessages();
         } catch(e) {}
     }
 
@@ -1547,29 +1591,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnSendChat) {
         btnSendChat.addEventListener('click', async () => {
             const input = document.getElementById('chat-msg-input');
-            if(!input) return;
-            let content = input.value.trim();
-            if(!content || !currentChatRoomId) return;
-            content = filterProfanity(content);
-            
-            const newMsg = {
-                id: 'msg_' + Date.now() + '_' + Math.floor(Math.random()*1000),
-                room_id: currentChatRoomId,
-                sender_id: myClientId,
-                content: content,
-                timestamp: new Date().getTime()
-            };
-            
+            if(!input || !input.value.trim()) return;
+            await sendChatMessage(input.value.trim());
             input.value = '';
             input.focus();
-            try {
-                await fetch(`${SUPABASE_URL}/rest/v1/chat_messages`, {
-                    method: 'POST',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-                    body: JSON.stringify(newMsg)
-                });
-                fetchChatMessages();
-            } catch(e) {}
         });
     }
     
@@ -1580,6 +1605,57 @@ document.addEventListener('DOMContentLoaded', () => {
                 const btn = document.getElementById('btn-send-chat');
                 if(btn) btn.click();
             }
+        });
+    }
+
+    // 发送拥抱动效
+    const btnSendHug = document.getElementById('btn-send-hug');
+    if (btnSendHug) {
+        btnSendHug.addEventListener('click', async () => {
+            await sendChatMessage('[SYSTEM_HUG]');
+            // 触发自己这边的动效
+            triggerHugEffect();
+        });
+    }
+
+    function triggerHugEffect() {
+        const modal = document.getElementById('chat-modal');
+        for(let i=0; i<15; i++) {
+            const heart = document.createElement('div');
+            heart.textContent = ['🫂','💖','✨','🌟'][Math.floor(Math.random()*4)];
+            heart.style.position = 'absolute';
+            heart.style.left = Math.random() * 100 + '%';
+            heart.style.top = '100%';
+            heart.style.fontSize = (1.5 + Math.random()) + 'rem';
+            heart.style.pointerEvents = 'none';
+            heart.style.opacity = '1';
+            heart.style.transition = 'all 2s cubic-bezier(0.2, 1, 0.3, 1)';
+            heart.style.transform = `rotate(${Math.random()*60-30}deg)`;
+            modal.appendChild(heart);
+
+            setTimeout(() => {
+                heart.style.top = (Math.random() * 40 + 10) + '%';
+                heart.style.opacity = '0';
+                heart.style.transform = `rotate(${Math.random()*60-30}deg) scale(1.5)`;
+            }, 50);
+
+            setTimeout(() => heart.remove(), 2000);
+        }
+    }
+
+    // 切断星轨
+    const btnDisconnectChat = document.getElementById('btn-disconnect-chat');
+    if (btnDisconnectChat) {
+        btnDisconnectChat.addEventListener('click', async () => {
+            if(!currentChatRoomId) return;
+            // 发送最后一条断开消息
+            await sendChatMessage('📡 *星轨已断开，对方消失在深空中...*');
+            
+            const modal = document.getElementById('chat-modal');
+            if(modal) modal.style.display = 'none';
+            currentChatRoomId = null;
+            if(chatInterval) clearInterval(chatInterval);
+            starToast('已切断通讯，各自安好。');
         });
     }
 

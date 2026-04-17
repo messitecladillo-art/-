@@ -254,18 +254,33 @@
     </div>
 
     <!-- ======== 1V1 沉浸式星语空间 Modal ======== -->
-    <div id="chat-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100000; align-items: center; justify-content: center;">
-        <div style="background: rgba(15, 23, 42, 0.95); border: 1px solid #4f46e5; box-shadow: 0 0 40px rgba(79, 70, 229, 0.4); max-width: 500px; width: 90%; height: 75vh; display: flex; flex-direction: column; padding: 20px; border-radius: 16px;">
+    <div id="chat-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 100000; align-items: center; justify-content: center; overflow: hidden;">
+        <!-- 星空流星背景点缀 -->
+        <div style="position:absolute; inset:0; pointer-events:none; background: radial-gradient(circle at 50% 50%, rgba(79, 70, 229, 0.1) 0%, transparent 60%);"></div>
+        <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(129, 140, 248, 0.3); box-shadow: 0 10px 50px rgba(79, 70, 229, 0.5); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); max-width: 550px; width: 95%; height: 80vh; display: flex; flex-direction: column; padding: 20px; border-radius: 20px; position: relative;">
             <div style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="color: #e0e7ff; margin: 0; font-size: 1.2rem;"><i class="fa-solid fa-user-astronaut"></i> 星空共鸣舱</h3>
-                <button type="button" id="close-chat-modal" style="background: transparent; border: none; color: #cbd5e1; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                <div>
+                    <h3 style="color: #e0e7ff; margin: 0; font-size: 1.25rem; display:flex; align-items:center; gap:8px;">
+                        <i class="fa-solid fa-satellite-dish" style="color:#818cf8; animation: pulse 2s infinite;"></i> 星空共鸣舱
+                    </h3>
+                    <div style="font-size:0.75rem; color:#64748b; margin-top:4px;" id="chat-typing-status">量子信道已加密，对方为随机降临的星辰。</div>
+                </div>
+                <div style="display: flex; gap: 10px; align-items:center;">
+                    <button type="button" id="btn-disconnect-chat" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 6px 14px; border-radius: 12px; font-size:0.85rem; cursor: pointer; transition: 0.3s;" onmouseover="this.style.background='rgba(239,68,68,0.3)'" onmouseout="this.style.background='rgba(239,68,68,0.15)'"><i class="fa-solid fa-power-off"></i> 切断星轨</button>
+                    <button type="button" id="close-chat-modal" style="background: transparent; border: none; color: #cbd5e1; font-size: 1.8rem; line-height:1; cursor: pointer; padding:0 5px;" title="暂时隐藏">&times;</button>
+                </div>
             </div>
-            <div id="chat-messages-container" style="flex: 1; overflow-y: auto; padding: 15px 0; display: flex; flex-direction: column; gap: 15px; scrollbar-width: thin;">
-                <div style="text-align: center; color: #64748b; font-size: 0.85rem; margin-bottom: 20px;">连接已建立，进入端到端匿名量子频段...</div>
+            
+            <div id="chat-messages-container" style="flex: 1; overflow-y: auto; padding: 20px 10px; display: flex; flex-direction: column; gap: 18px; scrollbar-width: thin;">
+                <div style="text-align: center; color: #64748b; font-size: 0.85rem; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 5px; border-radius:20px;">连接已建立，进入端到端匿名量子频段...</div>
             </div>
-            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; display: flex; gap: 10px;">
-                <input type="text" id="chat-msg-input" placeholder="输入星语..." style="flex: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 8px; padding: 10px; outline: none; font-family: inherit;">
-                <button type="button" id="btn-send-chat" style="background: linear-gradient(135deg, #4f46e5, #818cf8); border: none; color: white; padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s;"><i class="fa-solid fa-paper-plane"></i></button>
+            
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; display: flex; gap: 10px; align-items: center;">
+                <button type="button" id="btn-send-hug" title="发送一个拥抱" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #f472b6; width: 42px; height: 42px; border-radius: 50%; display:flex; justify-content:center; align-items:center; font-size: 1.2rem; cursor: pointer; transition: 0.3s; flex-shrink: 0;" onmouseover="this.style.background='rgba(244,114,182,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">🫂</button>
+                
+                <input type="text" id="chat-msg-input" placeholder="输入星语... (Enter 发送)" style="flex: 1; background: rgba(0,0,0,0.4); border: 1px solid rgba(129, 140, 248, 0.2); color: white; border-radius: 20px; padding: 12px 18px; outline: none; font-family: inherit; font-size:0.95rem; box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);">
+                
+                <button type="button" id="btn-send-chat" style="background: linear-gradient(135deg, #4f46e5, #818cf8); border: none; color: white; width: 42px; height: 42px; border-radius: 50%; display:flex; justify-content:center; align-items:center; font-size: 1rem; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); flex-shrink: 0;"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
         </div>
     </div>
