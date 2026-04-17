@@ -1538,12 +1538,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 let theirPetEmoji = '👽'; // 陌生星辰默认头像
 
                 messages.forEach(msg => {
+                    const isMine = msg.sender_id === myClientId;
+
                     if (msg.content === '[SYSTEM_HUG]') {
-                        container.innerHTML += `<div style="text-align:center; margin: 10px 0;"><span style="background:rgba(244,114,182,0.15); color:#f472b6; padding: 5px 15px; border-radius:15px; font-size:0.85rem; border:1px solid rgba(244,114,182,0.3);">✨ 对方发送了一个跨星际拥抱 🫂</span></div>`;
+                        const hugText = isMine ? '你发送了一个跨星际拥抱' : '对方发送了一个跨星际拥抱';
+                        container.innerHTML += `<div style="text-align:center; margin: 10px 0;"><span style="background:rgba(244,114,182,0.15); color:#f472b6; padding: 5px 15px; border-radius:15px; font-size:0.85rem; border:1px solid rgba(244,114,182,0.3);">✨ ${hugText} 🫂</span></div>`;
+                        
+                        // 如果是刚才接收到新的拥抱（非自己发出的），且是最新渲染的，可以触发接收端特效
+                        // （在真实环境中可以通过增量渲染触发，这里简化处理）
                         return;
                     }
 
-                    const isMine = msg.sender_id === myClientId;
                     const cssClass = isMine ? 'chat-mine' : 'chat-theirs';
                     const avatar = isMine ? myPetEmoji : theirPetEmoji;
                     
