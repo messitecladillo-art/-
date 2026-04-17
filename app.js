@@ -335,6 +335,68 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // ========== 右侧面板统计 & 每日星语 ==========
+    const STAR_QUOTES = [
+        "宇宙不会忘记任何一声叹息。",
+        "你的眼泪，是星尘最温柔的形态。",
+        "每一次脆弱，都是勇气的另一种表达。",
+        "深夜的孤独，是灵魂在长大的声音。",
+        "你不需要完美，只需要真实。",
+        "月亮也会有阴晴圆缺，何况是你。",
+        "伤口是光照进来的地方。",
+        "允许自己慢下来，宇宙不赶时间。",
+        "你的故事值得被倾听。",
+        "今夜的泪水，是明天花园里的露珠。",
+        "即使全世界都在沉睡，星星依然为你闪烁。",
+        "没有永恒的黑夜，黎明只是在路上。",
+        "孤独不是软弱，而是与自己对话的开始。",
+        "你已经走了很远了，别忘了看看星空。"
+    ];
+
+    // 每天固定一句（基于日期的伪随机）
+    function getDailyQuote() {
+        const day = new Date().getDate() + new Date().getMonth() * 31;
+        return STAR_QUOTES[day % STAR_QUOTES.length];
+    }
+
+    // 初始化语录
+    const quoteEl = document.getElementById('daily-quote');
+    if(quoteEl) quoteEl.textContent = `"${getDailyQuote()}"`;
+
+    // 模拟在线人数（基于时间段的合理波动）
+    function getSimulatedOnline() {
+        const hour = new Date().getHours();
+        // 深夜活跃用户更多（符合树洞场景）
+        let base;
+        if(hour >= 22 || hour <= 2) base = 30 + Math.floor(Math.random() * 25);
+        else if(hour >= 10 && hour <= 18) base = 8 + Math.floor(Math.random() * 12);
+        else base = 15 + Math.floor(Math.random() * 15);
+        return base;
+    }
+
+    function updateSidePanel(posts) {
+        const onlineEl = document.getElementById('stat-online');
+        const todayEl = document.getElementById('stat-today');
+        const totalEl = document.getElementById('stat-total');
+        
+        if(onlineEl) onlineEl.textContent = getSimulatedOnline();
+        
+        if(posts && posts.length > 0) {
+            // 今日碎片：计算 timestamp 在今天 0 点之后的帖子
+            const todayStart = new Date();
+            todayStart.setHours(0, 0, 0, 0);
+            const todayCount = posts.filter(p => p.timestamp >= todayStart.getTime()).length;
+            if(todayEl) todayEl.textContent = todayCount;
+            if(totalEl) totalEl.textContent = posts.length;
+        }
+    }
+
+    // 每 30 秒随机波动在线人数
+    setInterval(() => {
+        const el = document.getElementById('stat-online');
+        if(el) el.textContent = getSimulatedOnline();
+    }, 30000);
+
     // ========== 氛围音效 (Web Audio API 太空白噪音) ==========
     let ambientCtx = null;
     let ambientPlaying = false;
@@ -791,6 +853,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 更新情绪光谱分布
         updateMoodDistribution(posts);
+        
+        // 更新右侧面板统计
+        updateSidePanel(posts);
 
         if(posts.length === 0) {
             wallContainer.innerHTML = '<div class="empty-state" style="text-align:center; color:#94a3b8; margin-top:50px;">宇宙空荡荡的，留下你的第一声回音吧。</div>';

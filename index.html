@@ -21,6 +21,49 @@
         <div id="stars3"></div>
     </div>
 
+    <!-- 左侧漂浮星球装饰 -->
+    <div class="side-decor left-decor">
+        <div class="floating-planet" style="width:80px; height:80px; top:15%; left:30px; background:radial-gradient(circle at 35% 35%, rgba(139,92,246,0.3), rgba(59,130,246,0.1), transparent 70%); animation-duration:18s; animation-delay:0s;"></div>
+        <div class="floating-planet" style="width:45px; height:45px; top:45%; left:60px; background:radial-gradient(circle at 40% 30%, rgba(244,114,182,0.25), rgba(168,85,247,0.1), transparent 70%); animation-duration:22s; animation-delay:3s;"></div>
+        <div class="floating-planet" style="width:25px; height:25px; top:70%; left:20px; background:radial-gradient(circle at 30% 30%, rgba(251,191,36,0.3), rgba(245,158,11,0.1), transparent 70%); animation-duration:15s; animation-delay:7s;"></div>
+        <!-- 星云光晕 -->
+        <div style="position:absolute; top:30%; left:-30px; width:150px; height:150px; background:radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 70%); border-radius:50%; animation: nebulaPulse 8s ease-in-out infinite;"></div>
+    </div>
+
+    <!-- 右侧迷你信息面板 -->
+    <div class="side-panel right-panel">
+        <div class="side-panel-inner">
+            <div class="panel-stat">
+                <div class="panel-stat-icon">🌍</div>
+                <div>
+                    <div class="panel-stat-num" id="stat-online">--</div>
+                    <div class="panel-stat-label">正在倾听</div>
+                </div>
+            </div>
+            <div class="panel-divider"></div>
+            <div class="panel-stat">
+                <div class="panel-stat-icon">💫</div>
+                <div>
+                    <div class="panel-stat-num" id="stat-today">--</div>
+                    <div class="panel-stat-label">今日碎片</div>
+                </div>
+            </div>
+            <div class="panel-divider"></div>
+            <div class="panel-stat">
+                <div class="panel-stat-icon">🔮</div>
+                <div>
+                    <div class="panel-stat-num" id="stat-total">--</div>
+                    <div class="panel-stat-label">累计回响</div>
+                </div>
+            </div>
+            <div class="panel-divider"></div>
+            <div class="panel-quote">
+                <div style="font-size:0.7rem; color:#64748b; margin-bottom:5px;">✦ 今日星语</div>
+                <div id="daily-quote" style="font-size:0.8rem; color:#cbd5e1; line-height:1.5; font-style:italic;">"宇宙不会忘记任何一声叹息。"</div>
+            </div>
+        </div>
+    </div>
+
     <!-- 顶部导航区 -->
     <header>
         <h1 id="brand-title">🌌 深夜树洞</h1>

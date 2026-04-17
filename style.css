@@ -48,6 +48,91 @@ body {
     to { transform: translateY(-2000px) rotate(360deg); }
 }
 
+/* ========== 左侧漂浮星球装饰 ========== */
+.side-decor {
+    position: fixed;
+    top: 0;
+    width: 120px;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 1;
+}
+.left-decor { left: 0; }
+
+.floating-planet {
+    position: absolute;
+    border-radius: 50%;
+    box-shadow: inset -3px -3px 8px rgba(0,0,0,0.3);
+    animation: planetFloat 18s ease-in-out infinite alternate;
+}
+
+@keyframes planetFloat {
+    0% { transform: translateY(0) rotate(0deg); }
+    33% { transform: translateY(-25px) rotate(5deg); }
+    66% { transform: translateY(15px) rotate(-3deg); }
+    100% { transform: translateY(-10px) rotate(2deg); }
+}
+
+@keyframes nebulaPulse {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.15); }
+}
+
+/* ========== 右侧迷你信息面板 ========== */
+.side-panel {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    pointer-events: auto;
+}
+.right-panel {
+    right: 15px;
+}
+
+.side-panel-inner {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(129, 140, 248, 0.15);
+    border-radius: 16px;
+    padding: 18px 15px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 30px rgba(0,0,0,0.3);
+    width: 130px;
+}
+
+.panel-stat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.panel-stat-icon {
+    font-size: 1.2rem;
+}
+
+.panel-stat-num {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #e0e7ff;
+    text-shadow: 0 0 8px rgba(129, 140, 248, 0.4);
+}
+
+.panel-stat-label {
+    font-size: 0.65rem;
+    color: #64748b;
+}
+
+.panel-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.06);
+    margin: 10px 0;
+}
+
+.panel-quote {
+    margin-top: 5px;
+}
+
 header {
     text-align: center;
     padding: 60px 20px 40px;
@@ -761,6 +846,10 @@ textarea:focus {
         right: 10px !important;
         bottom: 100px !important;
         max-width: none !important;
+    }
+    
+    .side-decor, .side-panel {
+        display: none !important;
     }
 }
 
