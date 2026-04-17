@@ -850,9 +850,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 提交新内容
 
-    // Ctrl+Enter 快捷发射
+    // Enter 快捷发射（Shift+Enter 换行）
     contentInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             submitBtn.click();
         }
