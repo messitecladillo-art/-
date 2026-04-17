@@ -704,7 +704,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span style="font-size:0.8rem; color:#64748b; text-align:center;">读取星际连线中...</span>
                     </div>
                     <div style="display: flex; gap: 5px;">
-                        <input type="text" id="comment-input-${post.id}" placeholder="在此留下星河回响..." style="flex:1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 8px 12px; border-radius: 8px; outline: none; font-size: 0.9rem; font-family: inherit;">
+                        <input type="text" id="comment-input-${post.id}" placeholder="在此留下星河回响..." onkeypress="if(event.key === 'Enter') window.submitComment('${post.id}')" style="flex:1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 8px 12px; border-radius: 8px; outline: none; font-size: 0.9rem; font-family: inherit;">
                         <button type="button" onclick="window.submitComment('${post.id}')" style="background: rgba(139, 92, 246, 0.4); border: 1px solid rgba(139, 92, 246, 0.5); color: #fff; padding: 6px 14px; border-radius: 8px; cursor:pointer; font-weight: bold; transition: all 0.3s;" onmouseover="this.style.background='rgba(139, 92, 246, 0.6)'" onmouseout="this.style.background='rgba(139, 92, 246, 0.4)'">发送</button>
                     </div>
                 </div>
@@ -1812,6 +1812,13 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 ritualText.focus();
             }, 100);
+        });
+        
+        ritualText.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                btnFireRitual.click();
+            }
         });
     }
 
