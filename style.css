@@ -853,6 +853,18 @@ textarea:focus {
     }
 }
 
+/* 深空放逐仪式 特效动画 */
+@keyframes blackholeSpin {
+    from { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+    to { transform: translate(-50%, -50%) rotate(360deg) scale(1.2); }
+}
+
+@keyframes shipFlyIntoBlackhole {
+    0% { transform: translateY(0) scaleY(0.1) rotate(45deg); opacity: 1; filter: brightness(1) drop-shadow(0 0 20px rgba(192, 132, 252, 0.8)); }
+    50% { transform: translateY(-150px) scale(0.5) rotate(180deg); opacity: 0.8; filter: brightness(1.5) drop-shadow(0 0 40px rgba(192, 132, 252, 1)); }
+    100% { transform: translateY(-300px) scale(0) rotate(720deg); opacity: 0; filter: brightness(2) drop-shadow(0 0 80px rgba(192, 132, 252, 1)); }
+}
+
 @keyframes spin {
     100% { transform: rotate(360deg); }
 }

@@ -1685,4 +1685,68 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ========== 互动小游戏：深空纸船放逐仪式 ==========
+    const btnRitual = document.getElementById('btn-ritual');
+    const ritualModal = document.getElementById('ritual-modal');
+    const btnCancelRitual = document.getElementById('btn-cancel-ritual');
+    const btnFireRitual = document.getElementById('btn-fire-ritual');
+    const ritualContent = document.getElementById('ritual-content');
+    const ritualText = document.getElementById('ritual-text');
+    const ritualBlackhole = document.getElementById('ritual-blackhole');
+    const ritualEcho = document.getElementById('ritual-echo');
+
+    if (btnRitual && ritualModal) {
+        btnRitual.addEventListener('click', () => {
+            // 重置状态
+            ritualContent.style.transform = 'none';
+            ritualContent.style.opacity = '1';
+            ritualContent.style.filter = 'none';
+            ritualContent.style.animation = 'none';
+            ritualText.value = '';
+            ritualBlackhole.style.opacity = '1';
+            ritualBlackhole.style.animation = 'blackholeSpin 10s linear infinite';
+            ritualEcho.style.opacity = '0';
+            
+            ritualModal.style.opacity = '1';
+            ritualModal.style.display = 'flex';
+            setTimeout(() => {
+                ritualText.focus();
+            }, 100);
+        });
+    }
+
+    if (btnCancelRitual) {
+        btnCancelRitual.addEventListener('click', () => {
+            ritualModal.style.display = 'none';
+        });
+    }
+
+    if (btnFireRitual) {
+        btnFireRitual.addEventListener('click', () => {
+            if (!ritualText.value.trim()) {
+                starToast('写点什么再放逐吧...');
+                return;
+            }
+
+            // 触发折叠与吸入黑洞动画
+            ritualContent.style.animation = 'shipFlyIntoBlackhole 4s forwards cubic-bezier(0.5, 0, 0.2, 1)';
+            
+            // 播放回响字幕
+            setTimeout(() => {
+                ritualEcho.style.opacity = '1';
+            }, 2500);
+
+            // 自动关闭
+            setTimeout(() => {
+                ritualModal.style.opacity = '0';
+                ritualModal.style.transition = 'opacity 1s';
+                
+                setTimeout(() => {
+                    ritualModal.style.display = 'none';
+                    ritualBlackhole.style.animation = 'none';
+                }, 1000);
+            }, 6000);
+        });
+    }
+
 });

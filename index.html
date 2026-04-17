@@ -208,7 +208,31 @@
         </section>
     </main>
 
-    <!-- 原氛围音效浮动按钮已整合至左侧星际电台面板 -->
+    <!-- 深空告别仪式 入口 -->
+    <button type="button" id="btn-ritual" style="position: fixed; bottom: 30px; left: 30px; background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(244, 114, 182, 0.4); color: #f472b6; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; z-index: 900; transition: all 0.3s; box-shadow: 0 0 15px rgba(244, 114, 182, 0.2); backdrop-filter: blur(5px);" title="将执念折成纸船放逐深空">🚀 放逐执念</button>
+
+    <!-- ======== 深空纸船放逐仪式 (互动小游戏) ======== -->
+    <div id="ritual-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200000; justify-content: center; align-items: center; overflow: hidden; flex-direction: column;">
+        
+        <!-- 黑洞背景特效 -->
+        <div id="ritual-blackhole" style="position: absolute; top: 50%; left: 50%; width: 400px; height: 400px; transform: translate(-50%, -50%); background: radial-gradient(circle, rgba(0,0,0,1) 10%, rgba(88,28,135,0.8) 30%, rgba(0,0,0,0) 70%); border-radius: 50%; opacity: 0; transition: opacity 2s; pointer-events: none; z-index: 1;"></div>
+        
+        <!-- 放逐操作区 -->
+        <div id="ritual-content" style="z-index: 10; display: flex; flex-direction: column; align-items: center; max-width: 500px; width: 90%; transition: all 2s cubic-bezier(0.25, 0.1, 0.25, 1);">
+            <h2 style="color: #e0e7ff; margin-bottom: 20px; font-weight: 300; letter-spacing: 2px; text-align: center;"><i class="fa-solid fa-feather-pointed"></i> 写下你想放下的执念...</h2>
+            <textarea id="ritual-text" placeholder="不管是痛苦的回忆、无法告别的遗憾，还是不敢说出口的秘密，都写在这里。不留痕迹，不入网络，只属于你与黑洞的秘密..." style="width: 100%; height: 200px; background: rgba(255,255,255,0.05); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; font-size: 1rem; resize: none; font-family: inherit; margin-bottom: 25px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); outline:none; line-height: 1.6;"></textarea>
+            
+            <div style="display:flex; gap:15px; width: 100%;">
+                <button type="button" id="btn-cancel-ritual" style="flex:1; background: transparent; border: 1px solid rgba(148, 163, 184, 0.4); color: #94a3b8; border-radius: 20px; padding: 12px; cursor: pointer; font-size:1rem; transition:0.3s;">等一下</button>
+                <button type="button" id="btn-fire-ritual" style="flex:2; background: linear-gradient(135deg, #7e22ce, #c084fc); border: none; color: white; border-radius: 20px; padding: 12px; cursor: pointer; font-size:1rem; font-weight:bold; box-shadow: 0 0 20px rgba(192, 132, 252, 0.5); transition:0.3s; letter-spacing: 1px;">折成星船，流放深空</button>
+            </div>
+        </div>
+
+        <!-- 疗愈回响字句 -->
+        <div id="ritual-echo" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #e0e7ff; font-size: 1.5rem; letter-spacing: 5px; opacity: 0; transition: opacity 3s; text-align: center; width: 80%; pointer-events: none; z-index: 20; text-shadow: 0 0 20px rgba(192,132,252,0.8);">
+            "宇宙已收下你的执念，请放下吧"
+        </div>
+    </div>
     <!-- 首次访问引导 -->
     <div id="onboarding-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200000; align-items: center; justify-content: center;">
         <div style="max-width: 420px; width: 90%; text-align: center; color: #e0e7ff;">
