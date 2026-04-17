@@ -56,10 +56,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if(stored) myPosts = JSON.parse(stored);
     } catch(e) {}
     
+    function updateProfileStats() {
+        const statsEl = document.getElementById('left-profile-stats');
+        if(statsEl) statsEl.textContent = myPosts.length;
+        
+        const avatarEl = document.getElementById('left-profile-avatar');
+        if(avatarEl) {
+            if(window.myPet && window.myPet.type && EMOJIS[window.myPet.type]) {
+                avatarEl.textContent = EMOJIS[window.myPet.type];
+            } else {
+                avatarEl.textContent = '🦊';
+            }
+        }
+    }
+
     function addMyPost(id) {
         if(!myPosts.includes(id)) {
             myPosts.push(id);
             localStorage.setItem('my_posts', JSON.stringify(myPosts));
+            updateProfileStats();
         }
     }
 
@@ -74,11 +89,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnLogin = document.getElementById('btn-login');
         const btnLogout = document.getElementById('btn-logout');
         const userDisplay = document.getElementById('user-display');
+        const profileName = document.getElementById('left-profile-name');
         
         if(currentUser) {
             if(btnLogin) btnLogin.style.display = 'none';
             if(btnLogout) btnLogout.style.display = 'inline-block';
             if(userDisplay) userDisplay.textContent = `🛸 ${currentUser.username}`;
+            if(profileName) profileName.textContent = currentUser.username;
             // 如果有登录用户，用用户 id 作为 clientId（跨设备统一身份）
             myClientId = currentUser.id;
             // 用户名自动填入署名
@@ -87,7 +104,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if(btnLogin) btnLogin.style.display = 'inline-block';
             if(btnLogout) btnLogout.style.display = 'none';
             if(userDisplay) userDisplay.textContent = '';
+            if(profileName) profileName.textContent = '匿名星尘';
         }
+        updateProfileStats();
     }
 
     // 从数据库同步该用户发过的所有帖子 ID（实现跨设备记忆）
@@ -406,18 +425,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const ambientToggle = document.getElementById('ambient-toggle');
     if(ambientToggle) {
         ambientToggle.addEventListener('click', () => {
+            const icon = document.getElementById('radio-icon');
             if(!bgmPlaying) {
                 bgm.play().catch(() => {});
                 bgmPlaying = true;
-                ambientToggle.textContent = '🔊';
-                ambientToggle.style.borderColor = 'rgba(129, 140, 248, 0.6)';
-                ambientToggle.style.boxShadow = '0 0 20px rgba(129, 140, 248, 0.4)';
+                if(icon) icon.innerHTML = '<i class="fa-solid fa-music"></i>';
+                ambientToggle.classList.add('radio-playing');
             } else {
                 bgm.pause();
                 bgmPlaying = false;
-                ambientToggle.textContent = '🔇';
-                ambientToggle.style.borderColor = 'rgba(129, 140, 248, 0.3)';
-                ambientToggle.style.boxShadow = '0 0 15px rgba(129, 140, 248, 0.2)';
+                if(icon) icon.innerHTML = '<i class="fa-solid fa-power-off"></i>';
+                ambientToggle.classList.remove('radio-playing');
             }
         });
     }
@@ -1020,6 +1038,9 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('my_star_pet', JSON.stringify(window.myPet));
             petModal.classList.remove('active');
             renderPet();
+            
+            // 顺便更新左侧的漫游档案头像
+            if(typeof updateProfileStats === 'function') updateProfileStats();
         });
     });
 
