@@ -177,6 +177,8 @@ header h1:hover {
     box-shadow: 0 20px 40px rgba(0,0,0,0.3);
     margin-bottom: 50px;
     transition: all 0.3s ease;
+    position: relative;
+    z-index: 50; /* 防止下拉菜单被下方的图表层重叠盖盖住 */
 }
 
 .publish-glass:focus-within {
