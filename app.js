@@ -1042,9 +1042,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 挂载全局删除方法
     window.triggerDelete = async function(id) {
-        if(!isAdmin) return;
+        const isMine = myPosts.includes(id);
+        if(!isAdmin && !isMine) {
+            starToast('权限不足，无法抹除不属于你的宇宙痕迹。');
+            return;
+        }
         if(confirm('确定要从宇宙中抹除这条痕迹吗？')) {
             await deletePost(id);
+            // 本地清单也移除
+            if(isMine) {
+                myPosts = myPosts.filter(p => p !== id);
+                localStorage.setItem('my_posts', JSON.stringify(myPosts));
+            }
             loadWall();
         }
     }
