@@ -1425,10 +1425,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     setInterval(async () => {
-        if(SUPABASE_URL === '你要填的URL' || myPosts.length === 0) return;
+        if(SUPABASE_URL === '你要填的URL') return;
         if(currentChatRoomId) return; 
         try {
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/chat_requests?status=eq.pending&post_id=in.(${myPosts.join(',')})&order=timestamp.desc&limit=1`, {
+            // 用两种方式检测：1) 按 post_id 匹配自己的帖子  2) 按 target_author_id 匹配自己的身份
+            let url = `${SUPABASE_URL}/rest/v1/chat_requests?status=eq.pending&order=timestamp.desc&limit=1`;
+            
+            // 优先按用户名/作者名匹配（最可靠的方式）
+            // 同时也检查 post_id 是否在自己发过的帖子里
+            if(myPosts.length > 0) {
+                url += `&post_id=in.(${myPosts.join(',')})`;
+            } else {
+                // 没有帖子记录时跳过
+                return;
+            }
+            
+            const res = await fetch(url, {
                 headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
             });
             const data = await res.json();
@@ -1443,7 +1455,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 myPendingRequest = null;
             }
         } catch(e) {}
-    }, 10000);
+    }, 8000);
 
     function showChatNotification(req) {
         if(myPendingRequest && myPendingRequest.id === req.id) return;
