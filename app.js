@@ -952,6 +952,12 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 发射中...';
         submitBtn.disabled = true;
 
+        // 【大杀器】AI 塔罗牌大模型干预触发
+        const urgentMoods = ['忧伤', '愤怒', '焦虑', '绝望', '孤独', '疲惫'];
+        if (urgentMoods.includes(selectedMood) && typeof window.runTarotIntervention === 'function') {
+            await new Promise(resolve => window.runTarotIntervention(selectedMood, resolve));
+        }
+
         try {
             // 所有发泄与分享模式统一上墙归档
             if(currentType !== 'history') {
@@ -2272,6 +2278,146 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => { if(el) el.style.opacity = Math.random() * 0.7 + 0.3; }, Math.random()*1000);
             }
         }
+        }
     }
+
+    // ==========================================
+    // ====== 🌌 量子纠缠社交匹配追踪 (3D特效) ======
+    // ==========================================
+    const btnQuantum = document.getElementById('btn-quantum-entanglement');
+    let quantumLines = [];
+
+    if(btnQuantum) {
+        btnQuantum.addEventListener('click', () => {
+            if(!is3DMode || !scene || postSprites.length < 2) {
+                starToast('必须进入 3D 观测模式且信号足够才能启动量子纠缠仪！');
+                return;
+            }
+
+            // 清理旧纠缠
+            quantumLines.forEach(l => scene.remove(l));
+            quantumLines = [];
+
+            // 寻找两个具有相同 mood 的点
+            let targetGroup = [];
+            const moodMap = {};
+            // 分类
+            postSprites.forEach(sprite => {
+                const mood = sprite.userData.postData.mood;
+                if(mood) {
+                    if(!moodMap[mood]) moodMap[mood] = [];
+                    moodMap[mood].push(sprite);
+                }
+            });
+
+            // 找包含多于1个的群组
+            for(const key in moodMap) {
+                if(moodMap[key].length >= 2) {
+                    targetGroup = moodMap[key];
+                    break;
+                }
+            }
+
+            if(targetGroup.length < 2) {
+                starToast('当前空间内情感谱系过于离散，未发现同频者...');
+                return;
+            }
+
+            // 随便取两个
+            const s1 = targetGroup[0];
+            const s2 = targetGroup[1];
+            const m = s1.userData.postData.mood;
+
+            // 绘制连线
+            try {
+                const material = new THREE.LineBasicMaterial({
+                    color: 0x38bdf8,
+                    transparent: true,
+                    opacity: 0.8,
+                    linewidth: 2
+                });
+                const points = [];
+                points.push(s1.position);
+                points.push(s2.position);
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const line = new THREE.Line(geometry, material);
+                scene.add(line);
+                quantumLines.push(line);
+
+                starToast(`探测到两束强烈的【${m}】脑波产生量子纠缠！星轨波道已接通！`);
+                
+                // 让两颗星爆闪一下
+                s1.scale.set(30, 30, 1);
+                s2.scale.set(30, 30, 1);
+                setTimeout(() => { s1.scale.set(15,15,1); s2.scale.set(15,15,1); }, 1000);
+
+            } catch(e) {
+                console.error("量子纠缠失败", e);
+            }
+        });
+    }
+
+    // ==========================================
+    // ====== 🎴 AI 星空先知塔罗牌干预逻辑 =============
+    // ==========================================
+    window.runTarotIntervention = function(moodLevel, resolveCallback) {
+        const overlay = document.getElementById('ai-tarot-overlay');
+        const card = document.querySelector('.tarot-card');
+        const textBox = document.getElementById('tarot-typewriter-text');
+        const btnAccept = document.getElementById('btn-tarot-accept');
+        
+        if(!overlay || !card) {
+            resolveCallback();
+            return;
+        }
+
+        // 显示并初始化
+        overlay.style.display = 'flex';
+        card.classList.remove('flipped');
+        textBox.innerHTML = '';
+        btnAccept.style.display = 'none';
+
+        // 设定生成文案
+        const aiDict = {
+            '焦虑': '高能预警：探测到异常密集的焦虑脉冲... 星空先知大模型经过 2400 亿个参数运算后想对你说：不必在无尽的相对时空中疯狂转子，一切星体都有其坍缩和重生的规律。',
+            '愤怒': '深空警报：检测到毁灭性的引力波碰撞... AI已为你注入液氮镇定。去毁灭恒星不如化为一缕暗物质，任他们互相撕咬，而你永远静谧。',
+            '忧伤': '温柔捕获：你的忧伤信号已经穿越光年被本台锁定。请不用害怕下坠，宇宙的最低点，铺满了柔软的星尘。',
+            '绝望': '终极指令：切勿断开连接！你的存在是这个星系最重要的奇点。即使光无法逃逸，爱依然可以进行量子隧穿。我们陪着你。',
+            '孤独': '全频段连线：你并不是在真空里漂流，我们共享着 138 亿年前同一场大爆炸的微粒。你在这里，就是全宇宙。',
+            '疲惫': '休眠舱准备就绪：停下引擎吧。允许自己停转，允许自己无效。把重力交给黑洞，把这一刻交给我。'
+        };
+
+        const textToDisplay = aiDict[moodLevel] || aiDict['孤独'];
+
+        // 等待几秒后翻牌
+        setTimeout(() => {
+            card.classList.add('flipped');
+
+            setTimeout(() => {
+                // 打字机逻辑
+                let i = 0;
+                textBox.classList.add('typewriter-cursor');
+                const typing = setInterval(() => {
+                    textBox.textContent += textToDisplay.charAt(i);
+                    i++;
+                    if(i >= textToDisplay.length) {
+                        clearInterval(typing);
+                        textBox.classList.remove('typewriter-cursor');
+                        btnAccept.style.display = 'inline-block';
+                    }
+                }, 80); // 打字速度
+
+            }, 800); // 翻牌后稍微等它转完
+            
+        }, 1500);
+
+        // 点击收下
+        const handleAccept = () => {
+            btnAccept.removeEventListener('click', handleAccept);
+            overlay.style.display = 'none';
+            resolveCallback();
+        };
+        btnAccept.addEventListener('click', handleAccept);
+    };
 
 });
