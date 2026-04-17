@@ -224,6 +224,34 @@ document.addEventListener('DOMContentLoaded', () => {
     updateAuthUI();
     if(currentUser) syncMyPosts();
 
+    // 自定义高颜值下拉菜单逻辑
+    const dropdown = document.getElementById('ai-persona-dropdown');
+    const dropdownSelected = dropdown ? dropdown.querySelector('.dropdown-selected') : null;
+    const dropdownOptions = dropdown ? dropdown.querySelectorAll('.dropdown-option') : null;
+    const hiddenInput = document.getElementById('ai-persona-select');
+    const selectedText = dropdown ? dropdown.querySelector('.selected-text') : null;
+
+    if(dropdown && dropdownSelected) {
+        dropdownSelected.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.classList.toggle('open');
+        });
+
+        dropdownOptions.forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                e.stopPropagation();
+                hiddenInput.value = opt.getAttribute('data-value');
+                selectedText.innerHTML = opt.innerHTML;
+                dropdown.classList.remove('open');
+            });
+        });
+
+        // 点击外部关闭下拉
+        document.addEventListener('click', () => {
+            dropdown.classList.remove('open');
+        });
+    }
+
     // 标签切换
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {

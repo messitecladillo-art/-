@@ -271,6 +271,23 @@ textarea:focus {
     box-shadow: 0 8px 25px rgba(139, 92, 246, 0.6);
 }
 
+/* 高颜值自定义下拉菜单过渡态样式 */
+.dropdown-selected:hover {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border-color: #818cf8 !important;
+}
+
+.dropdown-option:hover {
+    background: rgba(129, 140, 248, 0.2);
+}
+
+.custom-dropdown.open .dropdown-options {
+    display: block !important;
+}
+.custom-dropdown.open .dropdown-arrow {
+    transform: rotate(180deg) !important;
+}
+
 /* 瀑布流情绪墙 */
 .wall-container {
     column-count: 3;

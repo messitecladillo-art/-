@@ -145,13 +145,20 @@
             <div class="publish-footer">
                 <div class="identity-toggle">
                     <input type="text" id="post-author" placeholder="你的署名 (选填，留空则匿名)">
-                    
-                    <select id="ai-persona-select" style="margin-top: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: #a5b4fc; border-radius: 8px; padding: 5px; outline: none; font-family: inherit;">
-                        <option value="sister">月亮女神 (温柔降临)</option>
-                        <option value="observer">星河先知 (理智旁观)</option>
-                        <option value="pet">星际幻兽 (守护相伴)</option>
-                        <option value="none">🔇 独自静静 (不触发 AI)</option>
-                    </select>
+                    <!-- 高颜值自定义下拉菜单 -->
+                    <div class="custom-dropdown" id="ai-persona-dropdown" style="position: relative; margin-top: 10px; font-family: inherit;">
+                        <input type="hidden" id="ai-persona-select" value="sister">
+                        <div class="dropdown-selected" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(129, 140, 248, 0.4); color: #c4b5fd; border-radius: 8px; padding: 8px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s; font-size: 0.9rem; box-shadow: 0 0 10px rgba(129, 140, 248, 0.1);">
+                            <span class="selected-text">月亮女神 (温柔降临)</span>
+                            <i class="fa-solid fa-chevron-down dropdown-arrow" style="font-size: 0.8rem; transition: transform 0.3s;"></i>
+                        </div>
+                        <ul class="dropdown-options" style="position: absolute; top: 100%; left: 0; width: 100%; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(129, 140, 248, 0.3); border-radius: 8px; padding: 5px 0; margin-top: 5px; list-style: none; display: none; z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(10px);">
+                            <li class="dropdown-option" data-value="sister" style="padding: 10px 15px; cursor: pointer; color: #e0e7ff; transition: 0.2s; font-size: 0.9rem;">月亮女神 (温柔降临)</li>
+                            <li class="dropdown-option" data-value="observer" style="padding: 10px 15px; cursor: pointer; color: #e0e7ff; transition: 0.2s; font-size: 0.9rem;">星河先知 (理智旁观)</li>
+                            <li class="dropdown-option" data-value="pet" style="padding: 10px 15px; cursor: pointer; color: #e0e7ff; transition: 0.2s; font-size: 0.9rem;">星际幻兽 (守护相伴)</li>
+                            <li class="dropdown-option" data-value="none" style="padding: 10px 15px; cursor: pointer; color: #64748b; transition: 0.2s; font-size: 0.9rem;">🔇 独自静静 (不触发 AI)</li>
+                        </ul>
+                    </div>
                 </div>
                 <!-- 隐藏的密码输入框，仅在管理员模式显示 -->
                 <input type="password" id="admin-pwd" placeholder="管理员口令" style="display:none; margin-right: 10px; width: 100px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid #dc2626; padding: 5px; border-radius: 5px;">
