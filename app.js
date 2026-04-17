@@ -692,7 +692,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ✨ <span>${likes}</span>
                     </button>
                     <button type="button" class="action-btn comment-btn" onclick="window.toggleComments('${post.id}')" style="font-size: 0.95rem; display: flex; align-items: center; gap: 5px;">
-                        💬 <span>寄送回声</span>
+                        💬 <span id="comment-btn-text-${post.id}">寄送回声</span>
                     </button>
                     ${!isMine ? `<button type="button" class="action-btn invite-btn" onclick="window.sendChatRequest('${post.id}', '${post.author || '匿名旅人'}')" style="font-size: 0.95rem; margin-left: auto; color: #a5b4fc; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 20px; padding: 4px 10px;">
                         📡 <span style="font-size:0.85rem">邀请星语</span>
@@ -733,11 +733,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // ========== 评论/留言机制 ==========
     window.toggleComments = async function(postId) {
         const panel = document.getElementById(`comments-${postId}`);
+        const btnText = document.getElementById(`comment-btn-text-${postId}`);
         if(panel.style.display === 'none') {
             panel.style.display = 'flex';
+            if(btnText) btnText.innerText = '收起回声';
             await window.fetchComments(postId);
         } else {
             panel.style.display = 'none';
+            if(btnText) btnText.innerText = '寄送回声';
         }
     };
 
