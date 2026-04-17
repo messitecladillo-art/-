@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>深夜树洞 · 情绪收容所</title>
+    <!-- 引入字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- 引入图表神库 Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 动态星空背景 -->
+    <div class="stars-bg">
+        <div id="stars"></div>
+        <div id="stars2"></div>
+        <div id="stars3"></div>
+    </div>
+
+    <!-- 顶部导航区 -->
+    <header>
+        <h1 id="brand-title">🌌 深夜树洞</h1>
+        <p class="subtitle">来这里，卸下所有伪装，留给宇宙倾听。</p>
+        <div id="user-bar" style="position: absolute; top: 15px; right: 20px; display: flex; align-items: center; gap: 10px;">
+            <span id="user-display" style="color: #a5b4fc; font-size: 0.85rem;"></span>
+            <button type="button" id="btn-login" style="background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.4); color: #a5b4fc; padding: 5px 14px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-family: inherit; transition: all 0.3s;" onmouseover="this.style.background='rgba(99,102,241,0.4)'" onmouseout="this.style.background='rgba(99,102,241,0.2)'">🚀 登录 / 注册</button>
+            <button type="button" id="btn-logout" style="display:none; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: #94a3b8; padding: 5px 12px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; font-family: inherit; transition: all 0.3s;">退出轨道</button>
+        </div>
+    </header>
+
+    <!-- ======== 登录/注册弹窗 ======== -->
+    <div id="auth-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100001; justify-content: center; align-items: center;">
+        <div style="background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(129, 140, 248, 0.4); border-radius: 20px; padding: 35px; max-width: 380px; width: 90%; box-shadow: 0 0 40px rgba(129, 140, 248, 0.2);">
+            <h2 style="text-align: center; font-size: 1.4rem; margin-bottom: 5px; background: linear-gradient(135deg, #c084fc, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">✨ 进入你的星系</h2>
+            <p style="text-align: center; color: #64748b; font-size: 0.85rem; margin-bottom: 25px;">登录后，你的所有轨迹将被永远铭记</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <input type="text" id="auth-username" placeholder="星际代号 (用户名)" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 10px 15px; border-radius: 10px; outline: none; font-family: inherit; font-size: 0.95rem;">
+                <input type="password" id="auth-password" placeholder="量子密钥 (密码)" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 10px 15px; border-radius: 10px; outline: none; font-family: inherit; font-size: 0.95rem;">
+                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                    <button type="button" id="btn-do-login" style="flex: 1; background: linear-gradient(135deg, #4f46e5, #818cf8); border: none; color: white; padding: 10px; border-radius: 10px; cursor: pointer; font-weight: bold; font-family: inherit; transition: 0.3s;">登录</button>
+                    <button type="button" id="btn-do-register" style="flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1; padding: 10px; border-radius: 10px; cursor: pointer; font-family: inherit; transition: 0.3s;">注册新星系</button>
+                </div>
+                <button type="button" id="btn-close-auth" style="background: transparent; border: none; color: #64748b; cursor: pointer; font-size: 0.85rem; margin-top: 5px; font-family: inherit;">暂不登录，匿名漫游</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="container">
+        <!-- 情绪释放区 -->
+        <section class="publish-glass">
+            <div class="tabs">
+                <button type="button" class="tab-btn active" data-type="vent"><i class="fa-solid fa-cloud-showers-water"></i> 疯狂发泄</button>
+                <button type="button" class="tab-btn" data-type="share"><i class="fa-solid fa-star"></i> 分享碎片</button>
+                <button type="button" class="tab-btn" data-type="history" style="margin-left: auto; background: rgba(59, 130, 246, 0.2); border-color: rgba(59, 130, 246, 0.4);"><i class="fa-solid fa-clock-rotate-left"></i> 我的轨迹</button>
+            </div>
+            
+            <textarea id="post-content" placeholder="无需顾忌，随心写下你现在的真实感受..."></textarea>
+            
+            <!-- 情绪标签选择器 -->
+            <div id="mood-selector" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
+                <span style="color: #64748b; font-size: 0.85rem; line-height: 2;">此刻心情：</span>
+                <button type="button" class="mood-btn" data-mood="sad" style="background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: #93c5fd; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">😢 忧伤</button>
+                <button type="button" class="mood-btn" data-mood="angry" style="background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">😤 愤怒</button>
+                <button type="button" class="mood-btn" data-mood="anxious" style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fcd34d; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">😰 焦虑</button>
+                <button type="button" class="mood-btn" data-mood="happy" style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">😊 开心</button>
+                <button type="button" class="mood-btn" data-mood="calm" style="background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.3); color: #c4b5fd; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">😌 平静</button>
+                <button type="button" class="mood-btn" data-mood="lonely" style="background: rgba(100,116,139,0.15); border: 1px solid rgba(100,116,139,0.3); color: #94a3b8; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">🌙 孤独</button>
+            </div>
+
+            <div class="publish-footer">
+                <div class="identity-toggle">
+                    <input type="text" id="post-author" placeholder="你的署名 (选填，留空则匿名)">
+                    
+                    <select id="ai-persona-select" style="margin-top: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: #a5b4fc; border-radius: 8px; padding: 5px; outline: none; font-family: inherit;">
+                        <option value="sister">月亮女神 (温柔降临)</option>
+                        <option value="observer">星河先知 (理智旁观)</option>
+                        <option value="pet">星际幻兽 (守护相伴)</option>
+                        <option value="none">🔇 独自静静 (不触发 AI)</option>
+                    </select>
+                </div>
+                <!-- 隐藏的密码输入框，仅在管理员模式显示 -->
+                <input type="password" id="admin-pwd" placeholder="管理员口令" style="display:none; margin-right: 10px; width: 100px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid #dc2626; padding: 5px; border-radius: 5px;">
+                <button id="submit-btn"><i class="fa-regular fa-paper-plane"></i> 抛向宇宙</button>
+            </div>
+        </section>
+
+        <!-- 星空情绪折线图波纹面板 -->
+        <section class="chart-glass">
+            <div class="chart-header">
+                <h3><i class="fa-solid fa-chart-area"></i> 感受全人类的心灵震频</h3>
+                <div class="chart-tabs">
+                    <button class="chart-tab-btn active" data-range="24h">24 小时</button>
+                    <button class="chart-tab-btn" data-range="7d">最近 7 天</button>
+                </div>
+            </div>
+            <div class="canvas-container">
+                <canvas id="emotionChart"></canvas>
+            </div>
+            <!-- 情绪分布饼图 -->
+            <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;">
+                <h4 style="color: #cbd5e1; font-size: 0.95rem; margin-bottom: 15px;"><i class="fa-solid fa-heart-pulse"></i> 情绪光谱分布</h4>
+                <div id="mood-distribution" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+            </div>
+        </section>
+
+        <!-- 搜索与情绪筛选栏 -->
+        <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;">
+            <div style="flex: 1; min-width: 200px; position: relative;">
+                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 0.85rem;"></i>
+                <input type="text" id="search-input" placeholder="搜索宇宙碎片..." style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 8px 12px 8px 35px; border-radius: 10px; outline: none; font-family: inherit; font-size: 0.9rem;">
+            </div>
+            <div id="mood-filter-bar" style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button type="button" class="mood-filter active" data-filter="all" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #e0e7ff; padding: 4px 10px; border-radius: 16px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s;">全部</button>
+                <button type="button" class="mood-filter" data-filter="sad" style="background: transparent; border: 1px solid rgba(59,130,246,0.3); color: #93c5fd; padding: 4px 10px; border-radius: 16px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s;">😢</button>
+                <button type="button" class="mood-filter" data-filter="angry" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; padding: 4px 10px; border-radius: 16px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s;">😤</button>
+                <button type="button" class="mood-filter" data-filter="anxious" style="background: transparent; border: 1px solid rgba(245,158,11,0.3); color: #fcd34d; padding: 4px 10px; border-radius: 16px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s;">😰</button>
+                <button type="button" class="mood-filter" data-filter="happy" style="background: transparent; border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; padding: 4px 10px; border-radius: 16px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s;">😊</button>
+                <button type="button" class="mood-filter" data-filter="calm" style="background: transparent; border: 1px solid rgba(139,92,246,0.3); color: #c4b5fd; padding: 4px 10px; border-radius: 16px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s;">😌</button>
+                <button type="button" class="mood-filter" data-filter="lonely" style="background: transparent; border: 1px solid rgba(100,116,139,0.3); color: #94a3b8; padding: 4px 10px; border-radius: 16px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s;">🌙</button>
+            </div>
+        </div>
+
+        <!-- 情绪墙展示区 -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="color: #e0e7ff; font-size: 1.1rem; text-shadow: 0 0 10px rgba(129, 140, 248, 0.5);"><i class="fa-solid fa-meteor"></i> 宇宙信号碎片</h3>
+            <button type="button" id="refresh-wall-btn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 6px 14px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.3s; box-shadow: 0 2px 10px rgba(0,0,0,0.2);" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                <i class="fa-solid fa-rotate-right"></i> 换一批
+            </button>
+        </div>
+        <section class="wall-container" id="wall">
+            <!-- 卡片由 JS 动态生成 -->
+            <div class="empty-state">宇宙正在加载过去的记忆...</div>
+        </section>
+    </main>
+
+    <!-- 氛围音效浮动按钮 -->
+    <button type="button" id="ambient-toggle" style="position: fixed; bottom: 80px; left: 20px; background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(129, 140, 248, 0.3); color: #818cf8; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; font-size: 1.1rem; z-index: 900; transition: all 0.3s; box-shadow: 0 0 15px rgba(129, 140, 248, 0.2); display: flex; align-items: center; justify-content: center;" title="氛围音效">🔇</button>
+
+    <!-- 首次访问引导 -->
+    <div id="onboarding-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200000; align-items: center; justify-content: center;">
+        <div style="max-width: 420px; width: 90%; text-align: center; color: #e0e7ff;">
+            <div id="onboard-step" style="transition: opacity 0.5s;">
+                <div style="font-size: 3rem; margin-bottom: 20px;" id="onboard-icon">🌌</div>
+                <h2 style="font-size: 1.5rem; margin-bottom: 10px; background: linear-gradient(135deg, #c084fc, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;" id="onboard-title">欢迎来到深夜树洞</h2>
+                <p style="color: #94a3b8; margin-bottom: 30px; line-height: 1.6;" id="onboard-desc">在这片星空下，你可以卸下所有伪装，向宇宙倾诉最真实的自己。</p>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button type="button" id="onboard-skip" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #94a3b8; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-family: inherit;">跳过</button>
+                <button type="button" id="onboard-next" style="background: linear-gradient(135deg, #4f46e5, #818cf8); border: none; color: white; padding: 8px 24px; border-radius: 20px; cursor: pointer; font-weight: bold; font-family: inherit;">继续 →</button>
+            </div>
+            <div style="margin-top: 20px; display: flex; gap: 6px; justify-content: center;" id="onboard-dots"></div>
+        </div>
+    </div>
+
+    <!-- 右下角专属星空宠物的悬浮舱 -->
+    <div id="my-pet-container" class="pet-hidden">
+        <div id="my-pet-avatar">🥚</div>
+        <div class="pet-level-badge">Lv.<span id="pet-lvl-text">1</span></div>
+        <div id="pet-hearts-container"></div>
+    </div>
+
+    <!-- 领养电子宠物拟物面板 -->
+    <div id="pet-picker-modal" class="modal-overlay">
+        <div class="modal-glass">
+            <h2>✨ 召唤你的星空伴侣</h2>
+            <p>它将吞噬你的烦恼，与你一同在树洞中成长</p>
+            <div class="pet-options">
+                <div class="pet-card" data-pet="fox">
+                    <div class="pet-emoji">🦊</div>
+                    <h3>星云幻狐</h3>
+                </div>
+                <div class="pet-card" data-pet="cat">
+                    <div class="pet-emoji">🐱</div>
+                    <h3>曜石黑猫</h3>
+                </div>
+                <div class="pet-card" data-pet="rabbit">
+                    <div class="pet-emoji">🐰</div>
+                    <h3>月桂星兔</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI 回信弹窗 -->
+    <div id="ai-reply-modal" class="modal-overlay">
+        <div class="modal-glass" style="max-width: 600px; text-align: left;">
+            <h2 style="font-size: 1.4rem; margin-bottom: 20px;"><i class="fa-solid fa-envelope-open-text"></i> 星空的回音</h2>
+            <div id="ai-reply-content" style="line-height: 1.6; font-size: 1.1rem; min-height: 100px;">
+                <i class="fa-solid fa-satellite-dish fa-spin"></i> 正在跨越光年接收信号...
+            </div>
+            <div style="text-align: right; margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                <button id="btn-save-ai" style="display: none; background: linear-gradient(45deg, #a855f7, #3b82f6); border: none; color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer; box-shadow: 0 0 10px rgba(168,85,247,0.5);">放入星海 ✨</button>
+                <button id="close-ai-modal" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer;">嗯嗯</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======== 收到邀请的右下角悬浮通知 ======== -->
+    <div id="chat-notification" style="display: none; position: fixed; bottom: 80px; right: 20px; background: rgba(30, 41, 59, 0.95); border: 1px solid #818cf8; border-radius: 12px; padding: 15px; box-shadow: 0 0 20px rgba(129, 140, 248, 0.5); z-index: 9999; animation: slideInRight 0.5s forwards; max-width: 280px;">
+        <div style="font-weight: bold; color: #e0e7ff; margin-bottom: 5px;">📡 收到未知星系请求！</div>
+        <div style="font-size: 0.85rem; color: #cbd5e1; margin-bottom: 15px;">有人希望与你在星语空间相见...</div>
+        <div style="display: flex; gap: 10px;">
+            <button type="button" id="btn-accept-chat" style="flex: 1; background: #818cf8; border: none; color: white; padding: 6px; border-radius: 6px; cursor: pointer; transition: all 0.2s;">接通源极</button>
+            <button type="button" id="btn-reject-chat" style="flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 6px; border-radius: 6px; cursor: pointer; transition: all 0.2s;">忽视信号</button>
+        </div>
+    </div>
+
+    <!-- ======== 1V1 沉浸式星语空间 Modal ======== -->
+    <div id="chat-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100000; align-items: center; justify-content: center;">
+        <div style="background: rgba(15, 23, 42, 0.95); border: 1px solid #4f46e5; box-shadow: 0 0 40px rgba(79, 70, 229, 0.4); max-width: 500px; width: 90%; height: 75vh; display: flex; flex-direction: column; padding: 20px; border-radius: 16px;">
+            <div style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="color: #e0e7ff; margin: 0; font-size: 1.2rem;"><i class="fa-solid fa-user-astronaut"></i> 星空共鸣舱</h3>
+                <button type="button" id="close-chat-modal" style="background: transparent; border: none; color: #cbd5e1; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            <div id="chat-messages-container" style="flex: 1; overflow-y: auto; padding: 15px 0; display: flex; flex-direction: column; gap: 15px; scrollbar-width: thin;">
+                <div style="text-align: center; color: #64748b; font-size: 0.85rem; margin-bottom: 20px;">连接已建立，进入端到端匿名量子频段...</div>
+            </div>
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; display: flex; gap: 10px;">
+                <input type="text" id="chat-msg-input" placeholder="输入星语..." style="flex: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 8px; padding: 10px; outline: none; font-family: inherit;">
+                <button type="button" id="btn-send-chat" style="background: linear-gradient(135deg, #4f46e5, #818cf8); border: none; color: white; padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s;"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes slideInRight {
+            from { transform: translateX(100px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .chat-bubble {
+            max-width: 80%; padding: 10px 15px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; word-break: break-all;
+        }
+        .chat-mine {
+            align-self: flex-end; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4); color: #e0e7ff; border-bottom-right-radius: 4px;
+        }
+        .chat-theirs {
+            align-self: flex-start; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: #f8fafc; border-bottom-left-radius: 4px;
+        }
+        /* 星空 Toast */
+        #star-toast-container {
+            position: fixed; top: 30px; left: 50%; transform: translateX(-50%);
+            z-index: 999999; display: flex; flex-direction: column; align-items: center; gap: 10px; pointer-events: none;
+        }
+        .star-toast {
+            background: rgba(15, 23, 42, 0.92); border: 1px solid rgba(129, 140, 248, 0.5);
+            color: #e0e7ff; padding: 12px 24px; border-radius: 12px; font-size: 0.95rem;
+            box-shadow: 0 0 25px rgba(129, 140, 248, 0.3), inset 0 0 15px rgba(129, 140, 248, 0.05);
+            backdrop-filter: blur(10px); animation: toastIn 0.4s ease-out, toastOut 0.4s ease-in 2.6s forwards;
+            pointer-events: auto; font-family: 'Noto Serif SC', serif;
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes toastOut {
+            from { opacity: 1; transform: translateY(0) scale(1); }
+            to { opacity: 0; transform: translateY(-15px) scale(0.95); }
+        }
+    </style>
+
+    <!-- 星空 Toast 容器 -->
+    <div id="star-toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
