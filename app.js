@@ -61,12 +61,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if(statsEl) statsEl.textContent = myPosts.length;
         
         const avatarEl = document.getElementById('left-profile-avatar');
-        if(avatarEl) {
-            if(window.myPet && window.myPet.type && EMOJIS[window.myPet.type]) {
-                avatarEl.textContent = EMOJIS[window.myPet.type];
-            } else {
-                avatarEl.textContent = '🦊';
-            }
+        const lvlEl = document.getElementById('left-profile-lvl');
+        
+        if(window.myPet && window.myPet.type) {
+            if(avatarEl) avatarEl.textContent = EMOJIS[window.myPet.type] || '🦊';
+            if(lvlEl) lvlEl.textContent = `Lv.${window.myPet.level || 1}`;
+        } else {
+            if(avatarEl) avatarEl.textContent = '🦊';
+            if(lvlEl) lvlEl.textContent = 'Lv.1';
         }
     }
 
@@ -1023,8 +1025,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderPet() {
         if(!window.myPet) return;
         petContainer.classList.remove('pet-hidden');
-        petAvatar.innerText = EMOJIS[window.myPet.type];
-        petLvlText.innerText = window.myPet.level;
+        petAvatar.innerText = EMOJIS[window.myPet.type] || '🥚';
+        if(typeof updateProfileStats === 'function') updateProfileStats();
     }
 
     // 领养幻兽
@@ -1038,23 +1040,93 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('my_star_pet', JSON.stringify(window.myPet));
             petModal.classList.remove('active');
             renderPet();
-            
-            // 顺便更新左侧的漫游档案头像
-            if(typeof updateProfileStats === 'function') updateProfileStats();
         });
     });
 
-    // 抚摸互动 (点一次冒小心心)
+    // ========== 幻兽高级互动系统 (拖拽漫游 + 自言自语 + 抚摸) ==========
     const heartsContainer = document.getElementById('pet-hearts-container');
-    petContainer.addEventListener('click', () => {
+    const petSpeechBubble = document.getElementById('pet-speech-bubble');
+    const petSentences = [
+        "今天也要开心鸭~ 贴贴！",
+        "宇宙的尽头是什么呢？",
+        "主人辛苦啦，摸摸头~",
+        "捕捉到一颗流星！🌟",
+        "本星兽饿了，快发点碎片喂我！",
+        "我们在星空漂流多远啦？",
+        "只要你呼唤，我就会出现~"
+    ];
+
+    let isDraggingPet = false;
+    let hasMoved = false;
+    let petStartX, petStartY;
+    
+    petContainer.addEventListener('mousedown', (e) => {
+        isDraggingPet = true;
+        hasMoved = false;
+        // 把右下角的 bottom/right 定位转换为 top/left，防止跳动
+        const rect = petContainer.getBoundingClientRect();
+        petContainer.style.bottom = 'auto';
+        petContainer.style.right = 'auto';
+        petContainer.style.left = rect.left + 'px';
+        petContainer.style.top = rect.top + 'px';
+
+        petStartX = e.clientX - rect.left;
+        petStartY = e.clientY - rect.top;
+        petContainer.style.cursor = 'grabbing';
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if(!isDraggingPet) return;
+        hasMoved = true;
+        petContainer.style.left = (e.clientX - petStartX) + 'px';
+        petContainer.style.top = (e.clientY - petStartY) + 'px';
+    });
+    
+    document.addEventListener('mouseup', () => {
+        if(isDraggingPet) {
+            isDraggingPet = false;
+            petContainer.style.cursor = 'grab';
+        }
+    });
+
+    petContainer.addEventListener('click', (e) => {
+        // 如果是拖拽动作，则不触发点击特效
+        if(hasMoved) return;
+
         const heart = document.createElement('div');
         heart.className = 'floating-heart';
-        heart.innerText = '❤';
+        heart.innerText = ['❤','✨','🌟','💖'][Math.floor(Math.random()*4)];
         // 计算随机的 X 轴偏移，让爱心飘的自然
         heart.style.setProperty('--rox', (Math.random() * 40 - 20)); 
         heartsContainer.appendChild(heart);
         setTimeout(() => heart.remove(), 1000);
+
+        // 触发对话气泡与跳跃
+        if(petSpeechBubble) {
+            petSpeechBubble.innerText = petSentences[Math.floor(Math.random() * petSentences.length)];
+            petSpeechBubble.style.opacity = '1';
+            
+            petAvatar.style.transition = 'transform 0.2s';
+            petAvatar.style.transform = 'translateY(-15px) scale(1.1)';
+            setTimeout(() => {
+                petAvatar.style.transform = 'translateY(0) scale(1)';
+            }, 200);
+
+            setTimeout(() => {
+                petSpeechBubble.style.opacity = '0';
+            }, 3000);
+        }
     });
+
+    // 偶尔自动冒泡
+    setInterval(() => {
+        if(!window.myPet || !petSpeechBubble) return;
+        if(Math.random() > 0.75 && petSpeechBubble.style.opacity === '0') {
+            petSpeechBubble.innerText = petSentences[Math.floor(Math.random() * petSentences.length)];
+            petSpeechBubble.style.opacity = '1';
+            setTimeout(() => petSpeechBubble.style.opacity = '0', 3000);
+        }
+    }, 12000);
 
     // 经验与升级系统
     window.gainPetExp = function(amt) {

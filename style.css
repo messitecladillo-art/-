@@ -479,20 +479,6 @@ textarea:focus {
     50% { transform: translateY(-15px); }
 }
 
-.pet-level-badge {
-    position: absolute;
-    bottom: -5px;
-    right: -10px;
-    background: linear-gradient(135deg, #f59e0b, #ef4444);
-    color: white;
-    font-size: 12px;
-    font-weight: bold;
-    padding: 2px 8px;
-    border-radius: 12px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-    border: 1px solid rgba(255,255,255,0.3);
-}
-
 /* 互动爱心动效 */
 #pet-hearts-container {
     position: absolute;
