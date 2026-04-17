@@ -2278,7 +2278,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => { if(el) el.style.opacity = Math.random() * 0.7 + 0.3; }, Math.random()*1000);
             }
         }
-        }
     }
 
     // ==========================================
