@@ -397,73 +397,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if(el) el.textContent = getSimulatedOnline();
     }, 30000);
 
-    // ========== 氛围音效 (Web Audio API 太空白噪音) ==========
-    let ambientCtx = null;
-    let ambientPlaying = false;
-    let ambientNodes = [];
-
-    function createAmbientSound() {
-        ambientCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        // 深沉的太空低频 Drone
-        const osc1 = ambientCtx.createOscillator();
-        osc1.type = 'sine';
-        osc1.frequency.value = 60;
-        const gain1 = ambientCtx.createGain();
-        gain1.gain.value = 0.08;
-        osc1.connect(gain1).connect(ambientCtx.destination);
-        
-        // 柔和的高频星辰泛音
-        const osc2 = ambientCtx.createOscillator();
-        osc2.type = 'sine';
-        osc2.frequency.value = 220;
-        const gain2 = ambientCtx.createGain();
-        gain2.gain.value = 0.03;
-        osc2.connect(gain2).connect(ambientCtx.destination);
-
-        // 白噪音模拟宇宙射线
-        const bufferSize = 2 * ambientCtx.sampleRate;
-        const noiseBuffer = ambientCtx.createBuffer(1, bufferSize, ambientCtx.sampleRate);
-        const output = noiseBuffer.getChannelData(0);
-        for(let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
-        const whiteNoise = ambientCtx.createBufferSource();
-        whiteNoise.buffer = noiseBuffer;
-        whiteNoise.loop = true;
-        const noiseGain = ambientCtx.createGain();
-        noiseGain.gain.value = 0.015;
-        // 加低通滤波让white noise更柔和
-        const lpf = ambientCtx.createBiquadFilter();
-        lpf.type = 'lowpass';
-        lpf.frequency.value = 800;
-        whiteNoise.connect(lpf).connect(noiseGain).connect(ambientCtx.destination);
-
-        osc1.start(); osc2.start(); whiteNoise.start();
-        ambientNodes = [osc1, osc2, whiteNoise];
-        
-        // 缓慢呼吸式振荡
-        const lfo = ambientCtx.createOscillator();
-        lfo.type = 'sine';
-        lfo.frequency.value = 0.1; // 10秒一次呼吸
-        const lfoGain = ambientCtx.createGain();
-        lfoGain.gain.value = 0.02;
-        lfo.connect(lfoGain).connect(gain1.gain);
-        lfo.start();
-        ambientNodes.push(lfo);
-    }
+    // ========== 背景音乐 (Everything's Alright) ==========
+    const bgm = new Audio('bgm.mp3');
+    bgm.loop = true;
+    bgm.volume = 0.35;
+    let bgmPlaying = false;
 
     const ambientToggle = document.getElementById('ambient-toggle');
     if(ambientToggle) {
         ambientToggle.addEventListener('click', () => {
-            if(!ambientPlaying) {
-                if(!ambientCtx) createAmbientSound();
-                else ambientCtx.resume();
-                ambientPlaying = true;
+            if(!bgmPlaying) {
+                bgm.play().catch(() => {});
+                bgmPlaying = true;
                 ambientToggle.textContent = '🔊';
                 ambientToggle.style.borderColor = 'rgba(129, 140, 248, 0.6)';
                 ambientToggle.style.boxShadow = '0 0 20px rgba(129, 140, 248, 0.4)';
             } else {
-                if(ambientCtx) ambientCtx.suspend();
-                ambientPlaying = false;
+                bgm.pause();
+                bgmPlaying = false;
                 ambientToggle.textContent = '🔇';
                 ambientToggle.style.borderColor = 'rgba(129, 140, 248, 0.3)';
                 ambientToggle.style.boxShadow = '0 0 15px rgba(129, 140, 248, 0.2)';
