@@ -92,9 +92,13 @@
     </div>
 
     <!-- 顶部导航区 -->
-    <header>
-        <h1 id="brand-title">🌌 深夜树洞</h1>
-        <p class="subtitle">来这里，卸下所有伪装，留给宇宙倾听。</p>
+    <header style="margin-bottom: 20px;">
+        <h1 id="brand-title" style="display: flex; justify-content: center; align-items: center; gap: 15px; font-size: 3rem; text-shadow: 0 0 20px rgba(165, 180, 252, 0.4); font-family: 'Noto Serif SC', serif;">
+            <i class="fa-solid fa-hurricane" style="color: #a5b4fc; font-size: 2.5rem; animation: spin 20s linear infinite;"></i>
+            <span>星 隙 回 响</span>
+        </h1>
+        <p class="subtitle" style="font-size: 1.1rem; letter-spacing: 3px; color: #818cf8; font-weight: 300; text-transform: uppercase;">ASTRAL ECHOES · 心 智 收 容 终 端</p>
+        <div style="font-size: 0.8rem; color: #475569; margin-top: 10px; font-family: monospace;">"在光年之外，你的每一声叹息都将被星云温柔捕获"</div>
         <div id="user-bar" style="position: absolute; top: 15px; right: 20px; display: flex; align-items: center; gap: 10px;">
             <span id="user-display" style="color: #a5b4fc; font-size: 0.85rem;"></span>
             <button type="button" id="btn-login" style="background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.4); color: #a5b4fc; padding: 5px 14px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-family: inherit; transition: all 0.3s;" onmouseover="this.style.background='rgba(99,102,241,0.4)'" onmouseout="this.style.background='rgba(99,102,241,0.2)'">🚀 登录 / 注册</button>
@@ -205,14 +209,39 @@
         <!-- 情绪墙展示区 -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h3 style="color: #e0e7ff; font-size: 1.1rem; text-shadow: 0 0 10px rgba(129, 140, 248, 0.5);"><i class="fa-solid fa-meteor"></i> 宇宙信号碎片</h3>
-            <button type="button" id="refresh-wall-btn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 6px 14px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.3s; box-shadow: 0 2px 10px rgba(0,0,0,0.2);" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
-                <i class="fa-solid fa-rotate-right"></i> 换一批
-            </button>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" id="toggle-3d-btn" style="background: rgba(139,92,246,0.2); border: 1px solid rgba(139,92,246,0.5); color: #c4b5fd; padding: 6px 14px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.3s; box-shadow: 0 2px 10px rgba(139,92,246,0.3);" onmouseover="this.style.background='rgba(139,92,246,0.4)'" onmouseout="this.style.background='rgba(139,92,246,0.2)'">
+                    <i class="fa-solid fa-cube"></i> 切至 3D 观测
+                </button>
+                <button type="button" id="refresh-wall-btn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 6px 14px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.3s; box-shadow: 0 2px 10px rgba(0,0,0,0.2);" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                    <i class="fa-solid fa-rotate-right"></i> 换一批
+                </button>
+            </div>
         </div>
+        
+        <!-- 传统瀑布流容器 -->
         <section class="wall-container" id="wall">
             <!-- 卡片由 JS 动态生成 -->
             <div class="empty-state">宇宙正在加载过去的记忆...</div>
         </section>
+
+        <!-- 全新的 3D 星际视图容器 -->
+        <div id="threejs-container" style="display: none; width: 100%; height: 75vh; border-radius: 15px; overflow: hidden; position: relative; border: 1px solid rgba(129, 140, 248, 0.2); box-shadow: inset 0 0 50px rgba(0,0,0,0.8);">
+            <!-- WebGL Canvas 将注入此处 -->
+            <div id="threejs-overlay-text" style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; color: rgba(255,255,255,0.4); font-size: 0.8rem; pointer-events: none; z-index: 10;">
+                <i class="fa-solid fa-hand-pointer"></i> 拖拽旋转星系 · 滚轮缩放 · 点击发光行星读取信号
+            </div>
+        </div>
+        
+        <!-- 3D 模式下点击星星时弹出的单帖子详细面板 -->
+        <div id="star-post-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(10px);">
+            <div style="position: relative; width: 90%; max-width: 500px;">
+                <button type="button" id="close-star-post" style="position: absolute; top: -40px; right: 0; background: transparent; border: none; color: white; cursor: pointer; font-size: 1.5rem; transition: 0.3s;"><i class="fa-solid fa-xmark"></i></button>
+                <div id="star-post-content" style="width: 100%;">
+                    <!-- 将会复用 createCardHTML 在这里注入卡片 -->
+                </div>
+            </div>
+        </div>
     </main>
 
     <!-- 深空告别仪式 入口 -->

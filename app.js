@@ -875,6 +875,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // 检查渲染完毕的卡片文本是否过长需要展示展开按钮
         checkContentOverflow(wallContainer);
 
+        // 同步把数据灌入 3D 画布引擎中渲染星云
+        if(window.updateThreeJSGalaxy) {
+            window.updateThreeJSGalaxy(renderPosts);
+        }
+
         if (posts.length === 40) {
             wallContainer.insertAdjacentHTML('beforeend', '<div style="text-align:center; color:#64748b; margin-top:30px; margin-bottom: 30px; font-size: 0.9rem;">更早的记忆已被深空吞噬...</div>');
         }
@@ -1857,6 +1862,249 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, 1000);
             }, 6000);
         });
+    }
+    // ==========================================
+    // ====== 🚀 震撼级 3D WebGL 星系引擎机制 ======
+    // ==========================================
+    const toggle3DBtn = document.getElementById('toggle-3d-btn');
+    const wallContainerDom = document.getElementById('wall');
+    const threejsContainer = document.getElementById('threejs-container');
+    const starPostModal = document.getElementById('star-post-modal');
+    const starPostContent = document.getElementById('star-post-content');
+    const closeStarPostBtn = document.getElementById('close-star-post');
+
+    let is3DMode = false;
+    let scene, camera, renderer, controls;
+    let starsGroup;
+    let raycaster, mouse;
+    let animationId;
+    let threeInitialized = false;
+    const postSprites = []; // 保存精灵物体以便射线检测
+
+    // 关闭单贴详情层
+    if (closeStarPostBtn) {
+        closeStarPostBtn.addEventListener('click', () => {
+            starPostModal.style.display = 'none';
+        });
+    }
+
+    // 动态按需加载星空引擎
+    function loadScript(src) {
+        return new Promise((resolve, reject) => {
+            if (document.querySelector(`script[src="${src}"]`)) return resolve();
+            const s = document.createElement('script');
+            s.src = src;
+            s.onload = resolve;
+            s.onerror = reject;
+            document.head.appendChild(s);
+        });
+    }
+
+    if (toggle3DBtn && wallContainerDom && threejsContainer) {
+        toggle3DBtn.addEventListener('click', async () => {
+            is3DMode = !is3DMode;
+            if (is3DMode) {
+                // 显示加载动画
+                toggle3DBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 引擎充能中...';
+                
+                try {
+                    // 并行按需加载 3D 引擎文件，彻底解决初始页面白屏问题
+                    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js");
+                    await loadScript("https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js");
+                } catch(e) {
+                    starToast('3D 星云引擎加载超时，请检查网络');
+                    is3DMode = false;
+                    toggle3DBtn.innerHTML = '<i class="fa-solid fa-cube"></i> 切至 3D 观测';
+                    return;
+                }
+
+                toggle3DBtn.innerHTML = '<i class="fa-solid fa-list"></i> 切至 2D 列表';
+                wallContainerDom.style.display = 'none';
+                threejsContainer.style.display = 'block';
+                if (!threeInitialized) {
+                    initThreeJSEngine();
+                    // 手动将最近数据送给3D引擎
+                    if(allLoadedPosts && allLoadedPosts.length > 0) {
+                        window.updateThreeJSGalaxy(allLoadedPosts.slice(0,40));
+                    }
+                }
+            } else {
+                toggle3DBtn.innerHTML = '<i class="fa-solid fa-cube"></i> 切至 3D 观测';
+                wallContainerDom.style.display = ''; // 清除 inline-style，恢复原本的 block 和瀑布流列布局
+                threejsContainer.style.display = 'none';
+            }
+        });
+    }
+
+    function initThreeJSEngine() {
+        const width = threejsContainer.clientWidth;
+        const height = threejsContainer.clientHeight;
+
+        scene = new THREE.Scene();
+        // 增加一点深空雾效
+        scene.fog = new THREE.FogExp2(0x0f172a, 0.0015);
+
+        camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 2000);
+        camera.position.set(0, 150, 400);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        threejsContainer.appendChild(renderer.domElement);
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.5;
+
+        starsGroup = new THREE.Group();
+        scene.add(starsGroup);
+
+        raycaster = new THREE.Raycaster();
+        mouse = new THREE.Vector2();
+
+        // Canvas 点击捕获
+        renderer.domElement.addEventListener('pointerdown', onCanvasClick, false);
+
+        // 窗口拉伸自适应
+        window.addEventListener('resize', () => {
+            if (!is3DMode) return;
+            const w = threejsContainer.clientWidth;
+            const h = threejsContainer.clientHeight;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+        });
+
+        threeInitialized = true;
+        animateWebGl();
+    }
+
+    // 材质缓存池，解决卡顿的核心（避免重复创建Canvas和纹理导致爆显存）
+    const materialCache = {};
+
+    // 辅助转换色值
+    function hexToRgba(hex, alpha) {
+        if(hex.startsWith('rgb')) {
+            return hex.replace('rgb', 'rgba').replace(')', `, ${alpha})`); 
+        }
+        let r=0, g=0, b=0;
+        if(hex.length === 4){
+            r = parseInt(hex[1]+hex[1],16);
+            g = parseInt(hex[2]+hex[2],16);
+            b = parseInt(hex[3]+hex[3],16);
+        } else if(hex.length === 7){
+            r = parseInt(hex.substring(1,3), 16);
+            g = parseInt(hex.substring(3,5), 16);
+            b = parseInt(hex.substring(5,7), 16);
+        }
+        return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+    // 根据真实情绪获取或生成发光精灵材质
+    function getGlowingSpriteMaterial(colorStr) {
+        if (materialCache[colorStr]) {
+            return materialCache[colorStr];
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 64; // 调小分辨率即可满足光晕需求，提升性能
+        canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+
+        const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        gradient.addColorStop(0.2, colorStr);
+        gradient.addColorStop(0.5, hexToRgba(colorStr, 0.4));
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 64, 64);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        const material = new THREE.SpriteMaterial({ map: texture, transparent: true, blending: THREE.AdditiveBlending });
+        
+        materialCache[colorStr] = material;
+        return material;
+    }
+
+    // 核心：把2D数据灌为3D星星
+    window.updateThreeJSGalaxy = function(posts) {
+        if (!threeInitialized) return;
+
+        // 清理旧宇宙星辰
+        while(starsGroup.children.length > 0){ 
+            const obj = starsGroup.children[0];
+            starsGroup.remove(obj); 
+            // 材质已被缓存，不再在此处 dispose，避免报错复用失败
+        }
+        postSprites.length = 0;
+
+        posts.forEach((post, index) => {
+            // 根据情绪提取颜色，没有情绪则用默认蓝紫色光晕
+            let colorStr = 'rgb(99, 102, 241)';
+            if(post.mood && MOOD_MAP[post.mood]) {
+                colorStr = MOOD_MAP[post.mood].color;
+            }
+
+            const material = getGlowingSpriteMaterial(colorStr);
+            const sprite = new THREE.Sprite(material);
+            
+            // 将点分布成类似螺旋星系或者随机球体力场
+            const radius = Math.random() * 250 + 20; 
+            const theta = Math.random() * Math.PI * 2; 
+            const phi = Math.acos((Math.random() * 2) - 1); 
+
+            let x = radius * Math.sin(phi) * Math.cos(theta);
+            let y = radius * Math.sin(phi) * Math.sin(theta) * 0.3; // 压扁一点成星盘状
+            let z = radius * Math.cos(phi);
+
+            sprite.position.set(x, y, z);
+            sprite.scale.set(15, 15, 1);
+            
+            // 存入真实数据
+            sprite.userData = { postData: post };
+
+            starsGroup.add(sprite);
+            postSprites.push(sprite);
+        });
+    };
+
+    function onCanvasClick(event) {
+        if (!is3DMode || !postSprites.length) return;
+        event.preventDefault();
+
+        const rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+
+        const intersects = raycaster.intersectObjects(postSprites);
+
+        if (intersects.length > 0) {
+            // 拾取到最近的恒星
+            const targetSprite = intersects[0].object;
+            const post = targetSprite.userData.postData;
+
+            // 视觉反馈放大一下
+            targetSprite.scale.set(30, 30, 1);
+            setTimeout(() => targetSprite.scale.set(15, 15, 1), 500);
+
+            // 呼出加密面板
+            starPostContent.innerHTML = createCardHTML(post);
+            starPostModal.style.display = 'flex';
+        }
+    }
+
+    function animateWebGl() {
+        animationId = requestAnimationFrame(animateWebGl);
+        if (!is3DMode) return; // 离开3D模式立刻挂起渲染，释放显卡极速提帧
+        if (controls) controls.update();
+        if (renderer && scene && camera) {
+            renderer.render(scene, camera);
+        }
     }
 
 });
