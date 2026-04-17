@@ -904,3 +904,97 @@ textarea:focus {
         gap: 8px;
     }
 }
+
+/* ========================================= */
+/* ======== 深空数据大屏 (Dashboard) ======== */
+/* ========================================= */
+
+.dash-stat-card {
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5), inset 0 0 20px rgba(16,185,129,0.05);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+}
+.dash-stat-card:hover {
+    box-shadow: 0 4px 20px rgba(16,185,129,0.2), inset 0 0 30px rgba(16,185,129,0.1);
+    border-color: rgba(16,185,129,0.5);
+    transform: translateY(-2px);
+}
+.dash-stat-card::after {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.03), transparent);
+    transform: rotate(45deg);
+    animation: dashScan 6s infinite linear;
+    pointer-events: none;
+}
+@keyframes dashScan {
+    0% { transform: rotate(45deg) translateY(-100%); }
+    100% { transform: rotate(45deg) translateY(100%); }
+}
+
+.dash-stat-card .stat-title {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+}
+.dash-stat-card .stat-value {
+    color: #f8fafc;
+    font-size: 2.2rem;
+    font-weight: 700;
+    font-family: monospace;
+    text-shadow: 0 0 10px rgba(255,255,255,0.2);
+}
+
+.dash-chart-box {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    backdrop-filter: blur(12px);
+    display: flex;
+    flex-direction: column;
+    transition: 0.3s;
+}
+.dash-chart-box:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 10px 40px rgba(99,102,241,0.15);
+}
+.dash-chart-title {
+    color: #e0e7ff;
+    font-size: 1.1rem;
+    margin: 0 0 20px 0;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed rgba(129, 140, 248, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dash-word-bubble {
+    position: absolute;
+    color: #a5b4fc;
+    font-weight: bold;
+    white-space: nowrap;
+    animation: floatWord 6s infinite ease-in-out alternate;
+    text-shadow: 0 0 8px rgba(165,180,252,0.4);
+    opacity: 0;
+    transition: opacity 1s;
+}
+@keyframes floatWord {
+    0% { transform: translateY(0) scale(1); }
+    100% { transform: translateY(-15px) scale(1.1); }
+}

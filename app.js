@@ -2107,4 +2107,171 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // ==========================================
+    // ====== 🎛️ 深空数据监测站 (全景大屏逻辑) ======
+    // ==========================================
+    const btnOpenDash = document.getElementById('btn-open-dashboard');
+    const btnCloseDash = document.getElementById('btn-close-dashboard');
+    const dashOverlay = document.getElementById('dashboard-overlay');
+    
+    let dashCharts = [];
+
+    if(btnOpenDash && dashOverlay) {
+        btnOpenDash.addEventListener('click', () => {
+            document.body.style.overflow = 'hidden'; // 防止底盘滚动
+            dashOverlay.style.display = 'block';
+            dashOverlay.style.animation = 'fadeIn 0.5s ease-out';
+            renderDashboard(window.allLoadedPosts || []);
+        });
+    }
+    if(btnCloseDash && dashOverlay) {
+        btnCloseDash.addEventListener('click', () => {
+            document.body.style.overflow = '';
+            dashOverlay.style.animation = 'fadeOut 0.3s ease-in forwards';
+            setTimeout(() => {
+                dashOverlay.style.display = 'none';
+                dashOverlay.style.animation = '';
+                // 摧毁旧表
+                dashCharts.forEach(c => c.destroy());
+                dashCharts = [];
+            }, 300);
+        });
+    }
+
+    function renderDashboard(posts) {
+        // 摧毁遗留图表
+        dashCharts.forEach(c => c.destroy());
+        dashCharts = [];
+
+        // 顶栏卡片数据
+        document.getElementById('dash-total-signals').innerText = posts.length;
+        const warnCount = posts.filter(p => ['愤怒', '焦虑', '孤独'].includes(p.mood)).length;
+        document.getElementById('dash-warn-signals').innerText = warnCount;
+        const healCount = posts.filter(p => ['开心', '平静'].includes(p.mood)).length;
+        document.getElementById('dash-heal-signals').innerText = healCount;
+
+        // 统一主题
+        Chart.defaults.color = '#cbd5e1';
+        Chart.defaults.font.family = "'Noto Serif SC', monospace";
+
+        // ====== 1. 雷达图 (情绪六维场向) ======
+        const moodStats = { '开心':0, '忧伤':0, '愤怒':0, '焦虑':0, '平静':0, '孤独':0 };
+        posts.forEach(p => { if(moodStats[p.mood] !== undefined) moodStats[p.mood]++; });
+        const radarCtx = document.getElementById('dashRadarChart').getContext('2d');
+        dashCharts.push(new Chart(radarCtx, {
+            type: 'radar',
+            data: {
+                labels: Object.keys(moodStats),
+                datasets: [{
+                    label: ' 捕获频率',
+                    data: Object.values(moodStats),
+                    backgroundColor: 'rgba(99, 102, 241, 0.4)',
+                    borderColor: '#818cf8',
+                    pointBackgroundColor: '#e0e7ff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: { color: 'rgba(255,255,255,0.1)' },
+                        grid: { color: 'rgba(255,255,255,0.1)' },
+                        pointLabels: { color: '#e0e7ff', font: { size: 14 } },
+                        ticks: { display: false }
+                    }
+                },
+                plugins: { legend: { display: false } }
+            }
+        }));
+
+        // ====== 2. 折线图 (24H Timeline) ======
+        const hourDist = new Array(24).fill(0);
+        posts.forEach(p => {
+            const h = new Date(p.created_at).getHours();
+            if(!isNaN(h)) hourDist[h]++;
+        });
+        const lineCtx = document.getElementById('dashLineChart').getContext('2d');
+        dashCharts.push(new Chart(lineCtx, {
+            type: 'line',
+            data: {
+                labels: Array.from({length:24}, (_,i)=>`${i}时`),
+                datasets: [{
+                    label: ' 脑迹波形',
+                    data: hourDist,
+                    borderColor: '#6ee7b7',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    x: { grid: { color: 'rgba(255,255,255,0.05)' } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        }));
+
+        // ====== 3. 极地气泡环图 (正负能量比) ======
+        const dogCtx = document.getElementById('dashDoughnutChart').getContext('2d');
+        dashCharts.push(new Chart(dogCtx, {
+            type: 'polarArea',
+            data: {
+                labels: ['光向能量 (治愈)', '暗物质能量 (致郁)'],
+                datasets: [{
+                    data: [healCount, warnCount],
+                    backgroundColor: ['rgba(16, 185, 129, 0.6)', 'rgba(239, 68, 68, 0.6)'],
+                    borderWidth: 1,
+                    borderColor: 'rgba(255,255,255,0.1)'
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: { r: { ticks: {display:false}, grid:{color:'rgba(255,255,255,0.05)'} } },
+                plugins: { legend: { position: 'right', labels: { color: '#e0e7ff' } } }
+            }
+        }));
+
+        // ====== 4. Web 级粒子潜意识词云反馈 (CSS生成) ======
+        const wordCloudDom = document.getElementById('dash-wordcloud');
+        if(wordCloudDom) {
+            wordCloudDom.innerHTML = '';
+            // 简单截取一些常见词
+            const rawContent = posts.map(p => p.content).join(' ');
+            const dummyWords = ['压力', '期末', '想念', '开心', '熬夜', '失眠', '绝望', '解脱', '安静', '未来', '疲惫', '坚持', '宇宙', '星星', '眼泪', '拥抱'];
+            
+            // 随机抽取并在容器内漂浮
+            for(let i=0; i<30; i++) {
+                const w = dummyWords[Math.floor(Math.random()*dummyWords.length)];
+                const el = document.createElement('div');
+                el.className = 'dash-word-bubble';
+                el.innerText = w;
+                
+                // 随机大小和位置
+                const size = 0.8 + Math.random() * 1.5;
+                el.style.fontSize = `${size}rem`;
+                el.style.left = `${5 + Math.random() * 80}%`;
+                el.style.top = `${5 + Math.random() * 80}%`;
+                
+                // 颜色和动画延迟随机
+                const isWarn = ['绝望', '失眠', '焦虑', '疲惫', '压力'].includes(w);
+                el.style.color = isWarn ? '#fca5a5' : '#a5b4fc';
+                el.style.opacity = '0';
+                el.style.animationDelay = `${Math.random() * -5}s`;
+                el.style.animationDuration = `${4 + Math.random() * 4}s`;
+
+                wordCloudDom.appendChild(el);
+
+                // 慢慢显现
+                setTimeout(() => { if(el) el.style.opacity = Math.random() * 0.7 + 0.3; }, Math.random()*1000);
+            }
+        }
+    }
+
 });
