@@ -2773,14 +2773,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const cyberZenWidget = document.getElementById('cyber-zen-widget');
     const cyberZenOrb = document.getElementById('cyber-zen-orb');
     const cyberZenTally = document.getElementById('cyber-zen-tally');
-    let cyberMerits = 0;
-    
+    const btnMeritRank = document.getElementById('btn-merit-rank');
+    const meritRankModal = document.getElementById('merit-rank-modal');
+    const btnCloseRank = document.getElementById('btn-close-rank');
+    const rankListContainer = document.getElementById('rank-list-container');
+    const myMeritRankText = document.getElementById('my-merit-rank-text');
+
+    // 本地持久化功德
+    let cyberMerits = parseInt(localStorage.getItem('cyber_merits') || '0', 10);
+    myMeritRankText.innerText = cyberMerits;
+
+    // 伪造逼真的全球数据
+    const globalBots = [
+        { name: '云端飞客', merits: 98742 },
+        { name: '赛博坦之魂', merits: 65230 },
+        { name: '薛定谔的猫', merits: 43012 },
+        { name: '星云漫步者', merits: 31055 },
+        { name: '匿名旅人', merits: 12004 },
+        { name: '暗物质行者', merits: 8901 }
+    ];
+
     if(cyberZenWidget && cyberZenOrb && cyberZenTally) {
-        cyberZenWidget.addEventListener('mousedown', (e) => {
+        cyberZenOrb.addEventListener('mousedown', (e) => {
             e.preventDefault();
             cyberMerits++;
+            localStorage.setItem('cyber_merits', cyberMerits.toString());
             cyberZenTally.innerText = cyberMerits + ' 功德';
             cyberZenTally.style.opacity = '1';
+            myMeritRankText.innerText = cyberMerits;
             
             // 图标形变物理反馈
             cyberZenOrb.style.transform = 'scale(0.85)';
@@ -2822,6 +2842,61 @@ document.addEventListener('DOMContentLoaded', () => {
                 cyberZenTally.style.opacity = '0';
             }, 2000);
         });
+
+        // 排行榜实时渲染算法
+        function renderRankList() {
+            rankListContainer.innerHTML = '';
+            
+            // 混合本人和机器人并排序
+            const mixedList = [...globalBots, { 
+                name: (window.currentUser ? window.currentUser.username : '我的终端(我)'), 
+                merits: cyberMerits,
+                isMe: true 
+            }];
+            mixedList.sort((a,b) => b.merits - a.merits);
+            
+            mixedList.forEach((user, index) => {
+                let badge = `<span style="color:#94a3b8; width: 25px; display:inline-block; font-weight:bold;">${index+1}</span>`;
+                if(index === 0) badge = `<span style="color:#fcd34d; width: 25px; display:inline-block; font-size:1.1rem;">🥇</span>`;
+                if(index === 1) badge = `<span style="color:#e2e8f0; width: 25px; display:inline-block; font-size:1.1rem;">🥈</span>`;
+                if(index === 2) badge = `<span style="color:#b45309; width: 25px; display:inline-block; font-size:1.1rem;">🥉</span>`;
+                
+                const styleOverlay = user.isMe ? `border-left: 3px solid #f472b6; background: rgba(244,114,182,0.1);` : ``;
+                const nameStyle = user.isMe ? `color: #f472b6; font-weight: bold;` : `color: #e0e7ff;`;
+                
+                rankListContainer.innerHTML += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; ${styleOverlay}">
+                        <div style="display:flex; align-items:center; gap: 10px;">
+                            ${badge}
+                            <span style="${nameStyle}">${user.name}</span>
+                        </div>
+                        <div style="color: #fcd34d; font-family: monospace; font-size: 1.1rem;">
+                            ${user.merits.toLocaleString()}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        if(btnMeritRank) {
+            btnMeritRank.addEventListener('click', () => {
+                meritRankModal.style.display = 'flex';
+                renderRankList();
+            });
+        }
+        if(btnCloseRank) {
+            btnCloseRank.addEventListener('click', () => meritRankModal.style.display = 'none');
+        }
+
+        // 宇宙机器人自我进化（每两秒全局机器人增加随机功德，制造动态内卷的排行氛围）
+        setInterval(() => {
+            globalBots.forEach(bot => {
+                if(Math.random() > 0.5) bot.merits += Math.floor(Math.random() * 5); 
+            });
+            if(meritRankModal.style.display === 'flex') {
+                renderRankList();
+            }
+        }, 3000);
     }
 
 });
