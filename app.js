@@ -351,7 +351,52 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             wall.innerHTML = filtered.map(p => createCardHTML(p)).join('');
             checkContentOverflow(wall);
+            renderGenerativeArt(); // 刷新后立刻绘制生成式艺术底纹
         }
+    }
+
+    // ========== Web3.0 情绪波普抽象艺术生成器 ==========
+    function renderGenerativeArt() {
+        const canvases = document.querySelectorAll('.generative-art-canvas:not([data-drawn="true"])');
+        canvases.forEach(canvas => {
+            const ctx = canvas.getContext('2d');
+            const id = canvas.dataset.postid;
+            const mood = canvas.dataset.mood;
+            
+            // 基于信件 ID 生成固定的 Hash 种子以保证艺术画面的唯一且稳定性
+            let hash = 0;
+            for(let i=0; i<id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) % 10000;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // 基于情绪决定主色相
+            let hue = (hash % 360);
+            if(mood === 'sad') hue = 210;
+            if(mood === 'angry') hue = 0;
+            if(mood === 'happy') hue = 45;
+            if(mood === 'calm') hue = 180;
+            if(mood === 'lonely') hue = 260;
+            if(mood === 'anxious') hue = 30;
+            
+            // 贝塞尔情绪曲线几何阵列
+            for(let i=0; i<12; i++) {
+                ctx.beginPath();
+                let x0 = (hash * i) % canvas.width;
+                let y0 = ((hash + i) * 17) % canvas.height;
+                let cpx1 = (x0 + 80 + (hash%100));
+                let cpy1 = (y0 - 60 - (hash%50));
+                let cpx2 = (x0 + 120);
+                let cpy2 = (y0 + 80);
+                let x1 = (x0 + 200 + (i*10));
+                let y1 = (y0 + (hash%40));
+                
+                ctx.moveTo(x0, y0);
+                ctx.bezierCurveTo(cpx1, cpy1, cpx2, cpy2, x1, y1);
+                ctx.strokeStyle = `hsla(${hue}, 80%, 65%, ${0.2 + (i%3)*0.1})`;
+                ctx.lineWidth = 1.5 + (i % 3);
+                ctx.stroke();
+            }
+            canvas.setAttribute('data-drawn', 'true');
+        });
     }
 
     // ========== 情绪光谱分布统计 ==========
@@ -668,25 +713,45 @@ document.addEventListener('DOMContentLoaded', () => {
             moodBadge = `<span style="font-size:0.75rem; padding:2px 8px; border-radius:10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:${m.color};">${m.emoji} ${m.label}</span>`;
         }
 
-        // E2EE 加密数据解译
+        // E2EE 与 ⏳ 时空胶囊锁机制
         let decodedContent = post.content || '';
-        if (typeof decodedContent === 'string' && decodedContent.startsWith('[E2EE]')) {
-            if (isMine) {
-                try {
-                    decodedContent = decodeURIComponent(window.atob(decodedContent.substring(6)));
-                    decodedContent = decodedContent.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                } catch(e) {
-                    decodedContent = '🔒 [密钥损毁：无法解析的残缺星流]';
+        let isLockedByTimeCapsule = false;
+        
+        if (post.unlock_date && new Date().getTime() < post.unlock_date) {
+            isLockedByTimeCapsule = true;
+            const diffMs = post.unlock_date - new Date().getTime();
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const diffMins = Math.ceil((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            let timeStr = diffDays > 0 ? `${diffDays} 天 ${diffHours} 小时` : `${diffMins} 分钟`;
+            
+            decodedContent = `<div style="text-align:center; padding: 30px 0; color:#94a3b8; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));"><i class="fa-solid fa-hourglass-half fa-spin" style="font-size:2.5rem; margin-bottom:15px; color:#c4b5fd;"></i><br><span style="font-size:0.95rem; letter-spacing:2px; font-weight:bold;">受强引力场时间封印保护<br>该情绪包裹将在 ${timeStr} 后完全解冻显影。</span></div>`;
+        } else {
+            if (typeof decodedContent === 'string' && decodedContent.startsWith('[E2EE]')) {
+                if (isMine) {
+                    try {
+                        decodedContent = decodeURIComponent(window.atob(decodedContent.substring(6)));
+                        decodedContent = decodedContent.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    } catch(e) {
+                        decodedContent = '🔒 [密钥损毁：无法解析的残缺星流]';
+                    }
+                } else {
+                    decodedContent = '<div style="color:#64748b; font-style:italic; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px dashed rgba(255,255,255,0.2);">🔒 <span style="filter: blur(5px); user-select: none; display:inline-block;">这些文字是被严密保护的，即使你黑入服务器也只能看到乱码。</span><br><span style="font-size:0.75rem; filter:none; color:#f472b6; margin-top: 8px; display:inline-block;">[最高网安阵列介植：此内容仅发送者可解密 (Zero-Knowledge)]</span></div>';
                 }
             } else {
-                decodedContent = '<div style="color:#64748b; font-style:italic; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px dashed rgba(255,255,255,0.2);">🔒 <span style="filter: blur(5px); user-select: none; display:inline-block;">这些文字是被严密保护的，即使你黑入服务器也只能看到乱码。</span><br><span style="font-size:0.75rem; filter:none; color:#f472b6; margin-top: 8px; display:inline-block;">[最高网安阵列介植：此内容仅发送者可解密 (Zero-Knowledge)]</span></div>';
+                decodedContent = decodedContent.replace(/</g, "&lt;").replace(/>/g, "&gt;");
             }
-        } else {
-            decodedContent = decodedContent.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        // 生成式艺术算法 (背景)
+        let extraCanvasHTML = '';
+        if ((post.type === 'vent' || post.type === 'share') && !isLockedByTimeCapsule) {
+            extraCanvasHTML = `<canvas class="generative-art-canvas" data-postid="${post.id}" data-mood="${post.mood || 'none'}" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:-1; opacity:0.1; border-radius:12px; pointer-events:none;"></canvas>`;
         }
 
         return `
-            <div class="card" data-type="${post.type}" data-id="${post.id}" style="transform: rotate(${rotate}deg); ${extraStyle}">
+            <div class="card" data-type="${post.type}" data-id="${post.id}" style="transform: rotate(${rotate}deg); ${extraStyle}; position:relative; overflow:hidden;">
+                ${extraCanvasHTML}
                 <button type="button" class="delete-btn" style="${isMine ? 'display:flex;' : ''}" onclick="triggerDelete('${post.id}')"><i class="fa-solid fa-trash"></i></button>
                 <div class="card-header">
                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -1025,6 +1090,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const author = authorInput.value.trim();
         
+        // 解析时空胶囊的过期时间
+        const timeCapsuleSelect = document.getElementById('time-capsule-select');
+        let unlockDate = 0;
+        if (timeCapsuleSelect) {
+            const delay = parseInt(timeCapsuleSelect.value, 10);
+            if (delay > 0) {
+                unlockDate = new Date().getTime() + delay;
+            }
+        }
+        
         const newPost = {
             id: 'post_' + new Date().getTime() + '_' + Math.floor(Math.random()*1000),
             type: currentType,
@@ -1032,6 +1107,7 @@ document.addEventListener('DOMContentLoaded', () => {
             author: author,
             mood: selectedMood || null,
             timestamp: new Date().getTime(),
+            unlock_date: unlockDate,
             pet_state: window.myPet // 发送情绪时带上自己的当前幻兽状态！
         };
 
@@ -2673,6 +2749,63 @@ document.addEventListener('DOMContentLoaded', () => {
                 meditationOrb.style.boxShadow = "0 0 40px #818cf8";
                 meditationOrb.style.transition = "all 1s ease-in-out";
             }, 1000);
+        });
+    }
+
+    // ==========================================
+    // ====== 🐟 Z世代赛博解压木鱼 (Cyber Zen) ======
+    // ==========================================
+    const cyberZenWidget = document.getElementById('cyber-zen-widget');
+    const cyberZenOrb = document.getElementById('cyber-zen-orb');
+    const cyberZenTally = document.getElementById('cyber-zen-tally');
+    let cyberMerits = 0;
+    
+    if(cyberZenWidget && cyberZenOrb && cyberZenTally) {
+        cyberZenWidget.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            cyberMerits++;
+            cyberZenTally.innerText = cyberMerits + ' 功德';
+            cyberZenTally.style.opacity = '1';
+            
+            // 图标形变物理反馈
+            cyberZenOrb.style.transform = 'scale(0.85)';
+            setTimeout(() => { cyberZenOrb.style.transform = 'scale(1)'; }, 100);
+            
+            // 实时光影多巴胺涟漪
+            cyberZenOrb.style.boxShadow = '0 0 40px rgba(254, 240, 138, 1), inset 0 0 20px rgba(255,255,255,0.8)';
+            setTimeout(() => { cyberZenOrb.style.boxShadow = '0 0 20px rgba(217, 119, 6, 0.6), inset 0 0 10px rgba(255,255,255,0.5)'; }, 200);
+
+            // 弹出功德粒子文字
+            const textParticle = document.createElement('div');
+            const sayings = ['+1 宁静', '+1 宇宙能量', '+1 赛博功德', '+1 离苦得乐', '+1 多巴胺', '+1 心流'];
+            textParticle.innerText = sayings[Math.floor(Math.random() * sayings.length)];
+            textParticle.style.position = 'fixed';
+            textParticle.style.left = (e.clientX - 20) + 'px';
+            textParticle.style.top = (e.clientY - 30) + 'px';
+            textParticle.style.color = '#fef08a';
+            textParticle.style.fontSize = '1.2rem';
+            textParticle.style.fontWeight = 'bold';
+            textParticle.style.textShadow = '0 0 10px #d97706';
+            textParticle.style.pointerEvents = 'none';
+            textParticle.style.zIndex = '100000';
+            textParticle.style.transition = 'all 1s ease-out';
+            document.body.appendChild(textParticle);
+            
+            // 升维漂浮
+            setTimeout(() => {
+                textParticle.style.transform = `translate(${Math.random()*40-20}px, -120px) scale(1.5)`;
+                textParticle.style.opacity = '0';
+            }, 10);
+            
+            setTimeout(() => {
+                textParticle.remove();
+            }, 1000);
+            
+            // 如果长时间不敲击，熄灭计数器
+            clearTimeout(cyberZenWidget.tallyTimeout);
+            cyberZenWidget.tallyTimeout = setTimeout(() => {
+                cyberZenTally.style.opacity = '0';
+            }, 2000);
         });
     }
 
