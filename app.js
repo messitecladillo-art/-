@@ -761,9 +761,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         return `
-            <div class="card" data-type="${post.type}" data-id="${post.id}" style="transform: rotate(${rotate}deg); ${extraStyle}; position:relative; overflow:hidden;">
+            <div class="card" data-type="${post.type}" data-id="${post.id}" style="transform: rotate(${rotate}deg); ${extraStyle}; position:relative; overflow:hidden;" ${isMine ? 'draggable="true"' : ''}>
                 ${extraCanvasHTML}
-                <button type="button" class="delete-btn" style="${isMine ? 'display:flex;' : ''}" onclick="triggerDelete('${post.id}')"><i class="fa-solid fa-trash"></i></button>
                 <div class="card-header">
                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                         <span class="author">${post.author || '匿名旅人'}</span>
@@ -2773,48 +2772,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const cyberZenWidget = document.getElementById('cyber-zen-widget');
     const cyberZenOrb = document.getElementById('cyber-zen-orb');
     const cyberZenTally = document.getElementById('cyber-zen-tally');
-    const btnMeritRank = document.getElementById('btn-merit-rank');
-    const meritRankModal = document.getElementById('merit-rank-modal');
-    const btnCloseRank = document.getElementById('btn-close-rank');
-    const rankListContainer = document.getElementById('rank-list-container');
-    const myMeritRankText = document.getElementById('my-merit-rank-text');
-
-    // 本地持久化功德
-    let cyberMerits = parseInt(localStorage.getItem('cyber_merits') || '0', 10);
-    myMeritRankText.innerText = cyberMerits;
-
-    // 网络同步防抖锁
-    let syncMeritsTimeout = null;
-
-    // 向 Supabase 同步真实功德数据 (需要确保数据库 users 表里有 merits 字段)
-    async function syncMeritsToCloud() {
-        if(!window.currentUser) return; // 匿名用户只存在于本地
-        if(SUPABASE_URL === '你要填的URL') return;
-        
-        try {
-            await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${window.currentUser.id}`, {
-                method: 'PATCH',
-                headers: {
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': `Bearer ${SUPABASE_KEY}`,
-                    'Content-Type': 'application/json',
-                    'Prefer': 'return=minimal'
-                },
-                body: JSON.stringify({ merits: cyberMerits })
-            });
-        } catch(e) {
-            console.error('同频功德到云端失败', e);
-        }
-    }
-
+    let cyberMerits = 0;
+    
     if(cyberZenWidget && cyberZenOrb && cyberZenTally) {
-        cyberZenOrb.addEventListener('mousedown', (e) => {
+        cyberZenWidget.addEventListener('mousedown', (e) => {
             e.preventDefault();
             cyberMerits++;
-            localStorage.setItem('cyber_merits', cyberMerits.toString());
             cyberZenTally.innerText = cyberMerits + ' 功德';
             cyberZenTally.style.opacity = '1';
-            myMeritRankText.innerText = cyberMerits;
             
             // 图标形变物理反馈
             cyberZenOrb.style.transform = 'scale(0.85)';
@@ -2855,75 +2820,126 @@ document.addEventListener('DOMContentLoaded', () => {
             cyberZenWidget.tallyTimeout = setTimeout(() => {
                 cyberZenTally.style.opacity = '0';
             }, 2000);
-            // 触发防抖上云机制
-            clearTimeout(syncMeritsTimeout);
-            syncMeritsTimeout = setTimeout(syncMeritsToCloud, 2000);
         });
-
-        // 真实排行榜云端获取与渲染算法
-        async function fetchAndRenderRankList() {
-            rankListContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#64748b;"><i class="fa-solid fa-satellite-dish fa-spin"></i> 正在从地球重力井提取数据...</div>';
-            
-            if(SUPABASE_URL === '你要填的URL') {
-                rankListContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#f43f5e;">⚠️ 请先配置 Supabase 真实环境变量。</div>';
-                return;
-            }
-
-            try {
-                // 读取真实存在的 Top 10 卷王
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id,username,merits&merits=not.is.null&order=merits.desc&limit=10`, {
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-                });
-                
-                if(!res.ok) {
-                    throw new Error('你需要去 Supabase SQL Editor 执行: ALTER TABLE users ADD COLUMN merits INTEGER DEFAULT 0;');
-                }
-
-                const topUsers = await res.json();
-                rankListContainer.innerHTML = '';
-                
-                if (topUsers.length === 0) {
-                    rankListContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#64748b;">尚未有连接者上榜，快来成为第一吧！</div>';
-                    return;
-                }
-
-                topUsers.forEach((user, index) => {
-                    let badge = `<span style="color:#94a3b8; width: 25px; display:inline-block; font-weight:bold;">${index+1}</span>`;
-                    if(index === 0) badge = `<span style="color:#fcd34d; width: 25px; display:inline-block; font-size:1.1rem;">🥇</span>`;
-                    if(index === 1) badge = `<span style="color:#e2e8f0; width: 25px; display:inline-block; font-size:1.1rem;">🥈</span>`;
-                    if(index === 2) badge = `<span style="color:#b45309; width: 25px; display:inline-block; font-size:1.1rem;">🥉</span>`;
-                    
-                    const isMe = window.currentUser && window.currentUser.id === user.id;
-                    const styleOverlay = isMe ? `border-left: 3px solid #f472b6; background: rgba(244,114,182,0.1);` : ``;
-                    const nameStyle = isMe ? `color: #f472b6; font-weight: bold;` : `color: #e0e7ff;`;
-                    
-                    rankListContainer.innerHTML += `
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; ${styleOverlay} margin-bottom: 8px;">
-                            <div style="display:flex; align-items:center; gap: 10px;">
-                                ${badge}
-                                <span style="${nameStyle}">${user.username || '匿名行者'}</span>
-                            </div>
-                            <div style="color: #fcd34d; font-family: monospace; font-size: 1.1rem;">
-                                ${(user.merits || 0).toLocaleString()}
-                            </div>
-                        </div>
-                    `;
-                });
-            } catch(e) {
-                console.error(e);
-                rankListContainer.innerHTML = `<div style="padding:15px; color:#fca5a5; font-size:0.85rem; background:rgba(220,38,38,0.2); border-radius:8px;">⚠️ 数据库缺失 merits 字段列。<br><br>👉 请在 Supabase SQL 终端运行:<br><code style="background:rgba(0,0,0,0.5); padding:3px; display:block; margin-top:5px; user-select:all;">ALTER TABLE users ADD COLUMN merits INTEGER DEFAULT 0;</code></div>`;
-            }
-        }
-
-        if(btnMeritRank) {
-            btnMeritRank.addEventListener('click', () => {
-                meritRankModal.style.display = 'flex';
-                fetchAndRenderRankList();
-            });
-        }
-        if(btnCloseRank) {
-            btnCloseRank.addEventListener('click', () => meritRankModal.style.display = 'none');
-        }
     }
+
+    // ==========================================
+    // ====== 🕳️ 黑洞拖拽物理引擎 ======
+    // ==========================================
+    const blackholeDropzone = document.getElementById('blackhole-dropzone');
+    let draggedCardId = null;
+
+    document.addEventListener('dragstart', (e) => {
+        const card = e.target.closest('.card');
+        if (card && card.getAttribute('draggable') === 'true') {
+            draggedCardId = card.dataset.id;
+            card.style.opacity = '0.5';
+            
+            // 鼠标指针变为抓取状态
+            card.style.cursor = 'grabbing';
+
+            if (blackholeDropzone) {
+                blackholeDropzone.style.display = 'flex';
+                // 强制小延迟让 transition 生效
+                setTimeout(() => {
+                    blackholeDropzone.style.opacity = '1';
+                    blackholeDropzone.style.bottom = '10px';
+                }, 10);
+            }
+        }
+    });
+
+    document.addEventListener('dragend', (e) => {
+        const card = e.target.closest('.card');
+        if (card) {
+            card.style.opacity = '1';
+            card.style.cursor = '';
+            draggedCardId = null;
+        }
+        if (blackholeDropzone) {
+            blackholeDropzone.style.opacity = '0';
+            blackholeDropzone.style.bottom = '-50px';
+            setTimeout(() => {
+                if (blackholeDropzone.style.opacity === '0') {
+                    blackholeDropzone.style.display = 'none';
+                    // 恢复原本样式
+                    const core = blackholeDropzone.querySelector('.blackhole-core');
+                    const text = blackholeDropzone.querySelector('#blackhole-text');
+                    if (core) {
+                        core.style.boxShadow = '0 0 40px #a855f7, inset 0 0 20px #c084fc';
+                        core.style.transform = 'scale(1)';
+                    }
+                    if (text) text.style.textShadow = '0 0 10px #a855f7';
+                }
+            }, 300);
+        }
+    });
+
+    document.addEventListener('dragover', (e) => {
+        e.preventDefault(); // 阻断默认行为以允许 drop
+        const dropzone = e.target.closest('#blackhole-dropzone');
+        if (dropzone && blackholeDropzone) {
+            const core = blackholeDropzone.querySelector('.blackhole-core');
+            const text = blackholeDropzone.querySelector('#blackhole-text');
+            if (core) {
+                core.style.boxShadow = '0 0 80px #ef4444, inset 0 0 40px #f87171';
+                core.style.transform = 'scale(1.2)';
+            }
+            if (text) text.style.textShadow = '0 0 20px #ef4444';
+        } else if (blackholeDropzone) {
+            const core = blackholeDropzone.querySelector('.blackhole-core');
+            const text = blackholeDropzone.querySelector('#blackhole-text');
+            if (core) {
+                core.style.boxShadow = '0 0 40px #a855f7, inset 0 0 20px #c084fc';
+                core.style.transform = 'scale(1)';
+            }
+            if (text) text.style.textShadow = '0 0 10px #a855f7';
+        }
+    });
+
+    document.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        const dropzone = e.target.closest('#blackhole-dropzone');
+        if (dropzone && draggedCardId) {
+            const cardEl = document.querySelector(`.card[data-id="${draggedCardId}"]`);
+            if (cardEl) {
+                // 狂暴吸入动画特效
+                cardEl.style.transition = 'all 0.8s cubic-bezier(0.5, 0, 0.2, 1)';
+                cardEl.style.transform = `translate(${e.clientX - cardEl.getBoundingClientRect().left - cardEl.offsetWidth/2}px, ${e.clientY - cardEl.getBoundingClientRect().top - cardEl.offsetHeight/2}px) scale(0) rotate(720deg)`;
+                cardEl.style.opacity = '0';
+                
+                starToast('☄️ 碎片已坠入黑洞，永久湮灭。');
+                
+                const idToDelete = draggedCardId;
+                draggedCardId = null; // 提前清空
+
+                // 执行删除逻辑
+                try {
+                    await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${idToDelete}`, {
+                        method: 'DELETE',
+                        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+                    });
+                } catch(err) {
+                    console.error('Delete failed:', err);
+                }
+
+                // 更新本地记忆清单
+                const idx = myPosts.indexOf(idToDelete);
+                if (idx > -1) {
+                    myPosts.splice(idx, 1);
+                    localStorage.setItem('my_posts', JSON.stringify(myPosts));
+                }
+                
+                try {
+                    if(typeof updateProfileStats === 'function') updateProfileStats();
+                } catch(e){}
+                
+                // 延迟重新加载墙，看特效播完
+                setTimeout(() => {
+                    loadWall();
+                }, 800);
+            }
+        }
+    });
 
 });

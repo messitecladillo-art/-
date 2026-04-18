@@ -513,33 +513,10 @@
     <!-- ============================================== -->
     <!-- ========== 🐟 Z世代赛博解压木鱼 (Cyber Zen) ========== -->
     <!-- ============================================== -->
-    <div id="cyber-zen-widget" style="position: fixed; bottom: 120px; right: 30px; z-index: 9999; display: flex; flex-direction: column; align-items: center;" title="狂点解压，积累赛博功德">
+    <div id="cyber-zen-widget" style="position: fixed; bottom: 120px; right: 30px; z-index: 9999; cursor: pointer; display: flex; flex-direction: column; align-items: center;" title="狂点解压，积累赛博功德">
         <div id="cyber-zen-tally" style="color: #fcd34d; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; text-shadow: 0 0 10px rgba(252,211,77,0.8); opacity: 0; transition: opacity 0.5s;">0 功德</div>
-        <div id="cyber-zen-orb" style="width: 60px; height: 60px; background: radial-gradient(circle at 30% 30%, #fef08a, #d97706); border-radius: 50%; box-shadow: 0 0 20px rgba(217,119,6,0.6), inset 0 0 10px rgba(255,255,255,0.5); display: flex; justify-content: center; align-items: center; font-size: 1.5rem; transition: transform 0.1s; user-select: none; cursor: pointer;">
+        <div id="cyber-zen-orb" style="width: 60px; height: 60px; background: radial-gradient(circle at 30% 30%, #fef08a, #d97706); border-radius: 50%; box-shadow: 0 0 20px rgba(217,119,6,0.6), inset 0 0 10px rgba(255,255,255,0.5); display: flex; justify-content: center; align-items: center; font-size: 1.5rem; transition: transform 0.1s; user-select: none;">
             🙏
-        </div>
-        <div id="btn-merit-rank" style="margin-top: 10px; background: rgba(252, 211, 77, 0.2); border: 1px solid rgba(252, 211, 77, 0.4); color: #fcd34d; font-size: 0.75rem; padding: 4px 10px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 5px; backdrop-filter: blur(5px); box-shadow: 0 0 10px rgba(252, 211, 77, 0.1); transition: 0.3s;" onmouseover="this.style.background='rgba(252, 211, 77, 0.4)'" onmouseout="this.style.background='rgba(252, 211, 77, 0.2)'">
-            <i class="fa-solid fa-trophy"></i> 全球功德榜
-        </div>
-    </div>
-
-    <!-- 全球功德榜 Modal -->
-    <div id="merit-rank-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100000; justify-content: center; align-items: center; backdrop-filter: blur(8px);">
-        <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(252, 211, 77, 0.4); border-radius: 20px; box-shadow: 0 0 40px rgba(217, 119, 6, 0.4); padding: 30px; width: 350px; max-width: 90%; color: #fff; position: relative;">
-            <button id="btn-close-rank" style="position: absolute; top: 15px; right: 20px; background: none; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
-            <h2 style="text-align: center; margin-top: 0; color: #fef08a; font-size: 1.5rem; letter-spacing: 2px; text-shadow: 0 0 10px #d97706;"><i class="fa-solid fa-ranking-star"></i> 宇宙功德排行榜</h2>
-            <div style="text-align: center; font-size: 0.8rem; color: #94a3b8; margin-bottom: 20px;">数据已折跃至去中心化节点</div>
-            
-            <div id="rank-list-container" style="display: flex; flex-direction: column; gap: 15px; max-height: 300px; overflow-y: auto; padding-right: 10px;">
-                <!-- 动态生成榜单 -->
-            </div>
-            
-            <div style="margin-top: 25px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 15px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(252, 211, 77, 0.15); padding: 10px 15px; border-radius: 12px; border: 1px solid rgba(252, 211, 77, 0.3);">
-                    <div style="font-weight: bold; color: #fcd34d;">我的功德位阶：</div>
-                    <div id="my-merit-rank-text" style="font-size: 1.2rem; color: #fef08a; font-weight: 900; text-shadow: 0 0 10px #d97706;">0</div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -582,5 +559,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+    <!-- 物理湮灭：黑洞视界区 -->
+    <div id="blackhole-dropzone" style="display: none; position: fixed; bottom: -50px; left: 50%; transform: translateX(-50%); width: 300px; height: 150px; background: radial-gradient(ellipse at center, rgba(0,0,0,1) 0%, rgba(88,28,135,0.8) 40%, rgba(0,0,0,0) 80%); border-radius: 50%; z-index: 99999; flex-direction: column; justify-content: center; align-items: center; transition: all 0.3s; opacity: 0; pointer-events: none;">
+        <div class="blackhole-core" style="width: 80px; height: 80px; background: #000; border-radius: 50%; box-shadow: 0 0 40px #a855f7, inset 0 0 20px #c084fc; animation: blackholePulse 2s infinite; pointer-events: auto; display: flex; justify-content: center; align-items: center; font-size: 2.2rem; color: #a855f7;"><i class="fa-solid fa-hurricane fa-spin"></i></div>
+        <div id="blackhole-text" style="color: #c084fc; font-size: 0.9rem; margin-top: 10px; font-weight: bold; letter-spacing: 2px; text-shadow: 0 0 10px #a855f7; pointer-events: none; transition: 0.3s;">拖入深渊永久湮灭</div>
+    </div>
 </body>
 </html>
