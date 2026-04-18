@@ -2483,4 +2483,109 @@ document.addEventListener('DOMContentLoaded', () => {
     // 点燃推进器
     setTimeout(startGalacticRadar, 2000); // 错峰加载，让首屏先飞一会儿
 
+    // ==========================================
+    // ====== 📄 B端商业闭环：微观白皮书导出 ======
+    // ==========================================
+    const btnExportPdf = document.getElementById('btn-export-pdf');
+    if (btnExportPdf) {
+        btnExportPdf.addEventListener('click', async function() {
+            if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+                starToast('出图引擎尚未挂载完毕，请稍后再试或检查网络');
+                return;
+            }
+            const originalHTML = this.innerHTML;
+            this.innerHTML = '<i class="fa-solid fa-spinner fa-spin-pulse"></i> 正在压缩星空视界...';
+            
+            try {
+                const { jsPDF } = window.jspdf;
+                const content = document.getElementById('dashboard-content');
+                // 解决滚动条截断黑屏 Bug
+                const overlay = document.getElementById('dashboard-overlay');
+                overlay.scrollTop = 0;
+                
+                const canvas = await html2canvas(content, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#0f172a'
+                });
+                
+                const imgData = canvas.toDataURL('image/jpeg', 0.98);
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                
+                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save('星隙回响_情绪波段预警白皮书.pdf');
+                starToast('✅ 报告已封装完毕并送达本地终端！');
+            } catch(e) {
+                console.error(e);
+                starToast('⚠️ 报告导出受阻，如果存在跨域图片请在本地服务器模式下运行');
+            } finally {
+                this.innerHTML = originalHTML;
+            }
+        });
+    }
+
+    // ==========================================
+    // ====== 🧘 C端次日留存：4-7-8 深度冥想舱 ======
+    // ==========================================
+    const btnToggleMeditation = document.getElementById('toggle-meditation-btn');
+    const btnCloseMeditation = document.getElementById('btn-close-meditation');
+    const meditationOverlay = document.getElementById('meditation-overlay');
+    const meditationOrb = document.getElementById('meditation-orb');
+    const meditationText = document.getElementById('meditation-text');
+    let breathTimer = null;
+
+    if (btnToggleMeditation && meditationOverlay) {
+        btnToggleMeditation.addEventListener('click', () => {
+            meditationOverlay.style.display = 'flex';
+            meditationOverlay.style.opacity = '0';
+            setTimeout(() => { meditationOverlay.style.transition = 'opacity 1s'; meditationOverlay.style.opacity = '1'; }, 10);
+            
+            // 4-7-8 神经节律算法
+            const startCycle = () => {
+                if(meditationOverlay.style.display === 'none') return;
+                
+                // 1. 吸气 4s
+                meditationText.innerText = "深入吸气 (4s)";
+                meditationOrb.style.transform = "scale(1.8)";
+                meditationOrb.style.boxShadow = "0 0 100px #818cf8";
+                meditationOrb.style.transition = "all 4s linear";
+                
+                setTimeout(() => {
+                    if(meditationOverlay.style.display === 'none') return;
+                    // 2. 屏气 7s
+                    meditationText.innerText = "屏住呼吸，感受高维 (7s)";
+                    meditationOrb.style.transform = "scale(1.85)"; // 微颤
+                    meditationOrb.style.transition = "all 0.5s alternate infinite";
+                    
+                    setTimeout(() => {
+                        if(meditationOverlay.style.display === 'none') return;
+                        // 3. 呼气 8s
+                        meditationOrb.style.transition = "all 8s ease-out";
+                        meditationText.innerText = "缓慢呼出焦虑 (8s)";
+                        meditationOrb.style.transform = "scale(0.8)";
+                        meditationOrb.style.boxShadow = "0 0 15px #818cf8";
+                    }, 7000);
+                }, 4000);
+            };
+            
+            // 立即开启第一波脉冲
+            setTimeout(startCycle, 500);
+            breathTimer = setInterval(startCycle, 19000); // 4+7+8 = 19秒一个绝对心流闭环
+        });
+
+        btnCloseMeditation.addEventListener('click', () => {
+            meditationOverlay.style.opacity = '0';
+            setTimeout(() => {
+                meditationOverlay.style.display = 'none';
+                if(breathTimer) clearInterval(breathTimer);
+                meditationText.innerText = "宇宙正注视着你...";
+                meditationOrb.style.transform = "scale(1)";
+                meditationOrb.style.boxShadow = "0 0 40px #818cf8";
+                meditationOrb.style.transition = "all 1s ease-in-out";
+            }, 1000);
+        });
+    }
+
 });
