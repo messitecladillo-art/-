@@ -2428,4 +2428,59 @@ document.addEventListener('DOMContentLoaded', () => {
         btnAccept.addEventListener('click', handleAccept);
     };
 
+    // ==========================================
+    // ====== 📡 星际回声实时动态雷达推送 (长轮询) ======
+    // ==========================================
+    let lastKnownEchoCount = -1;
+
+    function startGalacticRadar() {
+        // 先防抖判断
+        if(typeof SUPABASE_URL === 'undefined' || SUPABASE_URL === '你要填的URL') return;
+        
+        setInterval(async () => {
+            // 如果我一无所有，或者我都没发过信号，就不探测了
+            if(typeof myPosts === 'undefined' || !myPosts || myPosts.length === 0) return;
+
+            try {
+                // 利用 post_id=in.(id1,id2) 捕获所有属于我的评价
+                const url = `${SUPABASE_URL}/rest/v1/comments?post_id=in.(${myPosts.join(',')})`;
+                const res = await fetch(url, {
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+                });
+                
+                const data = await res.json();
+                
+                if (data && Array.isArray(data)) {
+                    // 初始化阶段同步历史总数
+                    if (lastKnownEchoCount === -1) {
+                        lastKnownEchoCount = data.length;
+                        return;
+                    }
+
+                    // 捕捉到增量！
+                    if (data.length > lastKnownEchoCount) {
+                        const newEchoes = data.length - lastKnownEchoCount;
+                        lastKnownEchoCount = data.length;
+                        
+                        // 高亮通知
+                        starToast(`🎐 叮！星轨震荡：有 ${newEchoes} 缕来自星际深处的回声刚刚落在了你的树洞上！`);
+                        
+                        // 稍微抖动一下导航条增加仪式感
+                        const headerElement = document.querySelector('header');
+                        if(headerElement) {
+                            headerElement.style.transition = 'box-shadow 0.5s';
+                            headerElement.style.boxShadow = '0 0 40px rgba(56, 189, 248, 0.8)';
+                            setTimeout(() => { headerElement.style.boxShadow = '0 5px 20px rgba(0,0,0,0.5)'; }, 2000);
+                        }
+                    }
+                }
+            } catch (err) {
+                // 静默护航，路演时不许抛红错
+            }
+        }, 6000); // 长轮询心跳 6s 脉冲一次
+    }
+
+    // 点燃推进器
+    setTimeout(startGalacticRadar, 2000); // 错峰加载，让首屏先飞一会儿
+
 });
