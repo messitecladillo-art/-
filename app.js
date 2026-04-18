@@ -2783,15 +2783,29 @@ document.addEventListener('DOMContentLoaded', () => {
     let cyberMerits = parseInt(localStorage.getItem('cyber_merits') || '0', 10);
     myMeritRankText.innerText = cyberMerits;
 
-    // 伪造逼真的全球数据
-    const globalBots = [
-        { name: '云端飞客', merits: 98742 },
-        { name: '赛博坦之魂', merits: 65230 },
-        { name: '薛定谔的猫', merits: 43012 },
-        { name: '星云漫步者', merits: 31055 },
-        { name: '匿名旅人', merits: 12004 },
-        { name: '暗物质行者', merits: 8901 }
-    ];
+    // 网络同步防抖锁
+    let syncMeritsTimeout = null;
+
+    // 向 Supabase 同步真实功德数据 (需要确保数据库 users 表里有 merits 字段)
+    async function syncMeritsToCloud() {
+        if(!window.currentUser) return; // 匿名用户只存在于本地
+        if(SUPABASE_URL === '你要填的URL') return;
+        
+        try {
+            await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${window.currentUser.id}`, {
+                method: 'PATCH',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify({ merits: cyberMerits })
+            });
+        } catch(e) {
+            console.error('同频功德到云端失败', e);
+        }
+    }
 
     if(cyberZenWidget && cyberZenOrb && cyberZenTally) {
         cyberZenOrb.addEventListener('mousedown', (e) => {
@@ -2841,62 +2855,75 @@ document.addEventListener('DOMContentLoaded', () => {
             cyberZenWidget.tallyTimeout = setTimeout(() => {
                 cyberZenTally.style.opacity = '0';
             }, 2000);
+            // 触发防抖上云机制
+            clearTimeout(syncMeritsTimeout);
+            syncMeritsTimeout = setTimeout(syncMeritsToCloud, 2000);
         });
 
-        // 排行榜实时渲染算法
-        function renderRankList() {
-            rankListContainer.innerHTML = '';
+        // 真实排行榜云端获取与渲染算法
+        async function fetchAndRenderRankList() {
+            rankListContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#64748b;"><i class="fa-solid fa-satellite-dish fa-spin"></i> 正在从地球重力井提取数据...</div>';
             
-            // 混合本人和机器人并排序
-            const mixedList = [...globalBots, { 
-                name: (window.currentUser ? window.currentUser.username : '我的终端(我)'), 
-                merits: cyberMerits,
-                isMe: true 
-            }];
-            mixedList.sort((a,b) => b.merits - a.merits);
-            
-            mixedList.forEach((user, index) => {
-                let badge = `<span style="color:#94a3b8; width: 25px; display:inline-block; font-weight:bold;">${index+1}</span>`;
-                if(index === 0) badge = `<span style="color:#fcd34d; width: 25px; display:inline-block; font-size:1.1rem;">🥇</span>`;
-                if(index === 1) badge = `<span style="color:#e2e8f0; width: 25px; display:inline-block; font-size:1.1rem;">🥈</span>`;
-                if(index === 2) badge = `<span style="color:#b45309; width: 25px; display:inline-block; font-size:1.1rem;">🥉</span>`;
+            if(SUPABASE_URL === '你要填的URL') {
+                rankListContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#f43f5e;">⚠️ 请先配置 Supabase 真实环境变量。</div>';
+                return;
+            }
+
+            try {
+                // 读取真实存在的 Top 10 卷王
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/users?select=id,username,merits&merits=not.is.null&order=merits.desc&limit=10`, {
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+                });
                 
-                const styleOverlay = user.isMe ? `border-left: 3px solid #f472b6; background: rgba(244,114,182,0.1);` : ``;
-                const nameStyle = user.isMe ? `color: #f472b6; font-weight: bold;` : `color: #e0e7ff;`;
+                if(!res.ok) {
+                    throw new Error('你需要去 Supabase SQL Editor 执行: ALTER TABLE users ADD COLUMN merits INTEGER DEFAULT 0;');
+                }
+
+                const topUsers = await res.json();
+                rankListContainer.innerHTML = '';
                 
-                rankListContainer.innerHTML += `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; ${styleOverlay}">
-                        <div style="display:flex; align-items:center; gap: 10px;">
-                            ${badge}
-                            <span style="${nameStyle}">${user.name}</span>
+                if (topUsers.length === 0) {
+                    rankListContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#64748b;">尚未有连接者上榜，快来成为第一吧！</div>';
+                    return;
+                }
+
+                topUsers.forEach((user, index) => {
+                    let badge = `<span style="color:#94a3b8; width: 25px; display:inline-block; font-weight:bold;">${index+1}</span>`;
+                    if(index === 0) badge = `<span style="color:#fcd34d; width: 25px; display:inline-block; font-size:1.1rem;">🥇</span>`;
+                    if(index === 1) badge = `<span style="color:#e2e8f0; width: 25px; display:inline-block; font-size:1.1rem;">🥈</span>`;
+                    if(index === 2) badge = `<span style="color:#b45309; width: 25px; display:inline-block; font-size:1.1rem;">🥉</span>`;
+                    
+                    const isMe = window.currentUser && window.currentUser.id === user.id;
+                    const styleOverlay = isMe ? `border-left: 3px solid #f472b6; background: rgba(244,114,182,0.1);` : ``;
+                    const nameStyle = isMe ? `color: #f472b6; font-weight: bold;` : `color: #e0e7ff;`;
+                    
+                    rankListContainer.innerHTML += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; ${styleOverlay} margin-bottom: 8px;">
+                            <div style="display:flex; align-items:center; gap: 10px;">
+                                ${badge}
+                                <span style="${nameStyle}">${user.username || '匿名行者'}</span>
+                            </div>
+                            <div style="color: #fcd34d; font-family: monospace; font-size: 1.1rem;">
+                                ${(user.merits || 0).toLocaleString()}
+                            </div>
                         </div>
-                        <div style="color: #fcd34d; font-family: monospace; font-size: 1.1rem;">
-                            ${user.merits.toLocaleString()}
-                        </div>
-                    </div>
-                `;
-            });
+                    `;
+                });
+            } catch(e) {
+                console.error(e);
+                rankListContainer.innerHTML = `<div style="padding:15px; color:#fca5a5; font-size:0.85rem; background:rgba(220,38,38,0.2); border-radius:8px;">⚠️ 数据库缺失 merits 字段列。<br><br>👉 请在 Supabase SQL 终端运行:<br><code style="background:rgba(0,0,0,0.5); padding:3px; display:block; margin-top:5px; user-select:all;">ALTER TABLE users ADD COLUMN merits INTEGER DEFAULT 0;</code></div>`;
+            }
         }
 
         if(btnMeritRank) {
             btnMeritRank.addEventListener('click', () => {
                 meritRankModal.style.display = 'flex';
-                renderRankList();
+                fetchAndRenderRankList();
             });
         }
         if(btnCloseRank) {
             btnCloseRank.addEventListener('click', () => meritRankModal.style.display = 'none');
         }
-
-        // 宇宙机器人自我进化（每两秒全局机器人增加随机功德，制造动态内卷的排行氛围）
-        setInterval(() => {
-            globalBots.forEach(bot => {
-                if(Math.random() > 0.5) bot.merits += Math.floor(Math.random() * 5); 
-            });
-            if(meritRankModal.style.display === 'flex') {
-                renderRankList();
-            }
-        }, 3000);
     }
 
 });
