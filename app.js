@@ -713,13 +713,23 @@ document.addEventListener('DOMContentLoaded', () => {
             moodBadge = `<span style="font-size:0.75rem; padding:2px 8px; border-radius:10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:${m.color};">${m.emoji} ${m.label}</span>`;
         }
 
-        // E2EE 与 ⏳ 时空胶囊锁机制
+        // ==========================================
+        // E2EE 与 ⏳ 时空胶囊锁机制解封
+        // ==========================================
         let decodedContent = post.content || '';
         let isLockedByTimeCapsule = false;
+        let pUnlockDate = 0;
+
+        // 1. 先验证并剥离时空胶囊标记 (绕过数据库字段限制的神级操作)
+        const timeMatch = typeof decodedContent === 'string' && decodedContent.match(/^\[TIMELOCK:(\d+)\]/);
+        if (timeMatch) {
+            pUnlockDate = parseInt(timeMatch[1], 10);
+            decodedContent = decodedContent.substring(timeMatch[0].length);
+        }
         
-        if (post.unlock_date && new Date().getTime() < post.unlock_date) {
+        if (pUnlockDate && new Date().getTime() < pUnlockDate) {
             isLockedByTimeCapsule = true;
-            const diffMs = post.unlock_date - new Date().getTime();
+            const diffMs = pUnlockDate - new Date().getTime();
             const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
             const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const diffMins = Math.ceil((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -727,6 +737,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             decodedContent = `<div style="text-align:center; padding: 30px 0; color:#94a3b8; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));"><i class="fa-solid fa-hourglass-half fa-spin" style="font-size:2.5rem; margin-bottom:15px; color:#c4b5fd;"></i><br><span style="font-size:0.95rem; letter-spacing:2px; font-weight:bold;">受强引力场时间封印保护<br>该情绪包裹将在 ${timeStr} 后完全解冻显影。</span></div>`;
         } else {
+            // 2. 解除胶囊后，再尝试解除 E2EE
             if (typeof decodedContent === 'string' && decodedContent.startsWith('[E2EE]')) {
                 if (isMine) {
                     try {
@@ -1097,6 +1108,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const delay = parseInt(timeCapsuleSelect.value, 10);
             if (delay > 0) {
                 unlockDate = new Date().getTime() + delay;
+                // 利用前端魔法，将未入库的时空胶囊信息直接塞进 content 字符串头绕过数据库 Schema 检查
+                content = `[TIMELOCK:${unlockDate}]` + content;
             }
         }
         
@@ -1107,7 +1120,6 @@ document.addEventListener('DOMContentLoaded', () => {
             author: author,
             mood: selectedMood || null,
             timestamp: new Date().getTime(),
-            unlock_date: unlockDate,
             pet_state: window.myPet // 发送情绪时带上自己的当前幻兽状态！
         };
 
@@ -1164,6 +1176,9 @@ document.addEventListener('DOMContentLoaded', () => {
             await loadWall(); 
             // 无论发泄还是分享，都触发深空 AI 的陪伴回音
             if(window.callOpenRouterAI) window.callOpenRouterAI(content);
+        } catch (error) {
+            console.error(error);
+            starToast('💥 发射失败：星云网络出现波动，请稍后再试。');
         } finally {
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
