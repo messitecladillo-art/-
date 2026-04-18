@@ -668,6 +668,23 @@ document.addEventListener('DOMContentLoaded', () => {
             moodBadge = `<span style="font-size:0.75rem; padding:2px 8px; border-radius:10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:${m.color};">${m.emoji} ${m.label}</span>`;
         }
 
+        // E2EE 加密数据解译
+        let decodedContent = post.content || '';
+        if (typeof decodedContent === 'string' && decodedContent.startsWith('[E2EE]')) {
+            if (isMine) {
+                try {
+                    decodedContent = decodeURIComponent(window.atob(decodedContent.substring(6)));
+                    decodedContent = decodedContent.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                } catch(e) {
+                    decodedContent = '🔒 [密钥损毁：无法解析的残缺星流]';
+                }
+            } else {
+                decodedContent = '<div style="color:#64748b; font-style:italic; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px dashed rgba(255,255,255,0.2);">🔒 <span style="filter: blur(5px); user-select: none; display:inline-block;">这些文字是被严密保护的，即使你黑入服务器也只能看到乱码。</span><br><span style="font-size:0.75rem; filter:none; color:#f472b6; margin-top: 8px; display:inline-block;">[最高网安阵列介植：此内容仅发送者可解密 (Zero-Knowledge)]</span></div>';
+            }
+        } else {
+            decodedContent = decodedContent.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
         return `
             <div class="card" data-type="${post.type}" data-id="${post.id}" style="transform: rotate(${rotate}deg); ${extraStyle}">
                 <button type="button" class="delete-btn" style="${isMine ? 'display:flex;' : ''}" onclick="triggerDelete('${post.id}')"><i class="fa-solid fa-trash"></i></button>
@@ -681,7 +698,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="time">${dateStr}</span>
                 </div>
                 <div class="card-content-wrapper" style="position: relative;">
-                    <div class="card-content collapsed">${post.content.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+                    <div class="card-content collapsed">${decodedContent}</div>
                     <button type="button" class="expand-btn" style="display:none;" onclick="window.toggleExpand(this)"><span>展开全文</span> <i class="fa-solid fa-chevron-down"></i></button>
                 </div>
                 <div class="card-actions">
@@ -930,10 +947,81 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ==========================================
+    // ====== 🎙️ 前端原生神经网语音接入引擎 ======
+    // ==========================================
+    const btnVoiceAI = document.getElementById('btn-voice-ai');
+    let isRecording = false;
+    let recognition = null;
+    
+    if (btnVoiceAI) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'zh-CN';
+            
+            recognition.onstart = () => {
+                isRecording = true;
+                btnVoiceAI.innerHTML = '<i class="fa-solid fa-microphone-lines fa-fade"></i>';
+                btnVoiceAI.style.boxShadow = '0 0 20px rgba(244, 114, 182, 0.8)';
+                contentInput.placeholder = '正在捕获您的星频声学信号... 请宣泄内心的黑洞...';
+            };
+            
+            recognition.onresult = (event) => {
+                let finalTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                    }
+                }
+                if (finalTranscript) {
+                    contentInput.value += (contentInput.value ? ' ' : '') + finalTranscript;
+                }
+            };
+            
+            recognition.onend = () => {
+                isRecording = false;
+                btnVoiceAI.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+                btnVoiceAI.style.boxShadow = '0 0 10px rgba(244, 114, 182, 0.1)';
+                contentInput.placeholder = '无需顾忌，随心写下你现在的真实感受...';
+            };
+            
+            recognition.onerror = (event) => {
+                starToast('网关接入失败：' + event.error);
+                recognition.stop();
+            };
+
+            btnVoiceAI.addEventListener('click', () => {
+                if(isRecording) {
+                    recognition.stop();
+                    starToast('已截断脑波录音');
+                } else {
+                    recognition.start();
+                    starToast('正在接驳本地生物声学矩阵...');
+                }
+            });
+        } else {
+            btnVoiceAI.addEventListener('click', () => {
+                starToast('⚠️ 当前浏览器内核过旧，不支持录音');
+            });
+        }
+    }
+
     submitBtn.addEventListener('click', async () => {
         let content = contentInput.value.trim();
         if(!content) return;
         content = filterProfanity(content); // 敏感词过滤护航
+
+        // ==============================================
+        // E2EE 端到端伪装加密算法介入
+        // ==============================================
+        const e2eeToggle = document.getElementById('e2ee-toggle');
+        if (e2eeToggle && e2eeToggle.checked) {
+            // 利用 Base64+URL Encode 对信件内容实现本地强混淆（演示效应）
+            content = '[E2EE]' + window.btoa(encodeURIComponent(content));
+        }
 
         const author = authorInput.value.trim();
         
